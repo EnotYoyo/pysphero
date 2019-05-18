@@ -42,9 +42,10 @@ class SystemInfoCommand(Enum):
     get_audio_crc = 0x23
     get_level_one_diagnostics = 0x26
     level_one_diagnostics_async = 0x27
-    get_sku = 0x28
+    # get_sku = 0x28
     get_secondary_mcu_status = 0x29
     secondary_mcu_status_async = 0x2a
+    get_sku = 0x38
 
 
 class SystemInfo(DeviceApiABC):
@@ -107,3 +108,7 @@ class SystemInfo(DeviceApiABC):
 
         response = self.request(SystemInfoCommand.get_stats_id, target_id=0x11)
         return int.from_bytes(response.data, "big")
+
+    def get_sku(self) -> str:
+        response = self.request(SystemInfoCommand.get_sku, target_id=0x11)
+        return "".join(chr(b) for b in response.data)
