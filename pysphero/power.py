@@ -38,22 +38,58 @@ class Power(DeviceApiABC):
     device_id = DeviceId.power
 
     def enter_deep_sleep(self):
+        """
+        Send shutdown command to toy
+
+        :return None:
+        """
+
         self.request(PowerCommand.enter_deep_sleep)
 
     def enter_soft_sleep(self):
+        """
+        Send sleep command to toy (normal condition of toy)
+
+        :return None:
+        """
+
         self.request(PowerCommand.enter_soft_sleep)
 
     def get_battery_voltage(self) -> float:
+        """
+        Returns battery voltage. Allows to determine the level of charge
+
+        :float return: battery voltage in volts
+        """
+
         response = self.request(PowerCommand.get_battery_voltage)
         return int.from_bytes(response.data, "big") / 100
 
     def wake(self):
+        """
+        Wake up toys
+
+        :return None:
+        """
+
         self.request(PowerCommand.wake)
 
     def get_battery_state(self) -> BatteryVoltageStates:
+        """
+        Get battery state without known voltage constants
+
+        :return BatteryVoltageStates:
+        """
+
         response = self.request(PowerCommand.get_battery_state)
         return BatteryVoltageStates(response.data[0])
 
     def battery_state_changed(self) -> ChargerStates:
+        """
+        Charging status information
+
+        :return ChargerStates:
+        """
+
         response = self.request(PowerCommand.battery_state_changed)
         return ChargerStates(response.data[0])

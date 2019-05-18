@@ -51,6 +51,12 @@ class SystemInfo(DeviceApiABC):
     device_id = DeviceId.system_info
 
     def get_main_application_version(self) -> Version:
+        """
+        Get version of toys firmware
+
+        :return Version:
+        """
+
         response = self.request(SystemInfoCommand.get_main_application_version)
         return Version(
             major=int.from_bytes(response.data[:2], "big"),
@@ -59,6 +65,12 @@ class SystemInfo(DeviceApiABC):
         )
 
     def get_bootloader_version(self) -> Version:
+        """
+        Get version of toys bootloader
+
+        :return Version:
+        """
+
         response = self.request(SystemInfoCommand.get_bootloader_version)
         return Version(
             major=int.from_bytes(response.data[:2], "big"),
@@ -67,14 +79,31 @@ class SystemInfo(DeviceApiABC):
         )
 
     def get_mac_address(self) -> str:
+        """
+        Get toy's mac address as "aa:bb:cc:dd:ee:ff"
+
+        :return str:
+        """
+
         response = self.request(SystemInfoCommand.get_mac_address)
         return ":".join(chr(b1) + chr(b2) for b1, b2 in zip(response.data[0::2], response.data[1::2]))
 
     def get_nordic_temperature(self) -> int:
-        """Use The Fahrenheit scale?"""
+        """
+        ???
+
+        :return str:
+        """
+
         response = self.request(SystemInfoCommand.get_nordic_temperature)
         return int.from_bytes(response.data, "big")
 
     def get_stats_id(self) -> int:
+        """
+        ???
+
+        :return:
+        """
+
         response = self.request(SystemInfoCommand.get_stats_id, target_id=0x11)
         return int.from_bytes(response.data, "big")
