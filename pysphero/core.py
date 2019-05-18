@@ -6,7 +6,6 @@ from typing import List
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
 
 from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic
-from pysphero.driving import Driving
 from pysphero.exceptions import PySpheroApiError, PySpheroRuntimeError, PySpheroTimeoutError
 from pysphero.helpers import cached_property
 from pysphero.packet import Packet
@@ -28,6 +27,7 @@ class SpheroDelegate(DefaultDelegate):
     Delegate class for bluepy
     Getting bytes from peripheral and build packets
     """
+
     def __init__(self):
         super().__init__()
         self.data = []
@@ -92,6 +92,7 @@ class SpheroCore:
     Core class for communication with peripheral device
     In the future, another bluetooth library can be replaced.
     """
+
     def __init__(self, mac_address: str):
         self.mac_address = mac_address
         self.delegate = SpheroDelegate()
@@ -156,6 +157,7 @@ class Sphero:
     """
     High-level API for communicate with sphero toy
     """
+
     def __init__(self, mac_address: str):
         self.sphero_core = SpheroCore(mac_address)
 
@@ -167,7 +169,8 @@ class Sphero:
 
     @property
     def peripheral_preferred_connection_parameters(self) -> PeripheralPreferredConnectionParameters:
-        ppcp = self.sphero_core.get_characteristic(uuid=GenericCharacteristic.peripheral_preferred_connection_parameters.value)
+        ppcp = self.sphero_core.get_characteristic(
+            uuid=GenericCharacteristic.peripheral_preferred_connection_parameters.value)
         data: bytes = ppcp.read()
         return PeripheralPreferredConnectionParameters(*struct.unpack("HHHH", data))
 
@@ -178,7 +181,7 @@ class Sphero:
     @cached_property
     def power(self) -> Power:
         return Power(sphero_core=self.sphero_core)
-
-    @cached_property
-    def driving(self) -> Driving:
-        return Driving(sphero_core=self.sphero_core)
+    #
+    # @cached_property
+    # def driving(self) -> Driving:
+    #     return Driving(sphero_core=self.sphero_core)

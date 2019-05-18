@@ -1,7 +1,6 @@
 import abc
 from enum import Enum
 
-from pysphero import core
 from pysphero.packet import Packet
 
 
@@ -19,7 +18,7 @@ class DeviceId(Enum):
 class DeviceApiABC(abc.ABC):
     device_id: Enum = NotImplemented
 
-    def __init__(self, sphero_core: core.SpheroCore):
+    def __init__(self, sphero_core):
         self.sphero_core = sphero_core
 
     def request(self, command_id: Enum, with_api_error: bool = True, timeout: int = 10, **kwargs) -> Packet:
