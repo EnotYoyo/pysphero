@@ -7,6 +7,7 @@ from typing import List
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
 
 from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic
+from pysphero.driving import Driving
 from pysphero.exceptions import PySpheroApiError, PySpheroRuntimeError, PySpheroTimeoutError
 from pysphero.helpers import cached_property
 from pysphero.packet import Packet
@@ -190,7 +191,7 @@ class Sphero:
     @cached_property
     def power(self) -> Power:
         return Power(sphero_core=self.sphero_core)
-    #
-    # @cached_property
-    # def driving(self) -> Driving:
-    #     return Driving(sphero_core=self.sphero_core)
+
+    @cached_property
+    def driving(self) -> Driving:
+        return Driving(sphero_core=self.sphero_core)
