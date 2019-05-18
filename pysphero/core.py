@@ -1,4 +1,5 @@
 import contextlib
+import logging
 import struct
 from collections import namedtuple
 from typing import List
@@ -11,6 +12,8 @@ from pysphero.helpers import cached_property
 from pysphero.packet import Packet
 from pysphero.power import Power
 from pysphero.system_info import SystemInfo
+
+logger = logging.getLogger(__name__)
 
 PeripheralPreferredConnectionParameters = namedtuple(
     "PeripheralPreferredConnectionParameters", (
@@ -48,6 +51,8 @@ class SpheroDelegate(DefaultDelegate):
         """
         Create and save packet from raw bytes
         """
+        logger.debug(f"Starting of packet build")
+
         packet = Packet.from_response(self.data)
         self.packets[packet.id] = packet
         self.data = []
@@ -62,6 +67,7 @@ class SpheroDelegate(DefaultDelegate):
         :return:
         """
         for b in data:
+            logger.debug(f"Received {b:#04x}")
             # packet always starting from start byte
             if len(self.data) == 0 and b != Packet.start:
                 raise PySpheroRuntimeError(f"Invalid first byte {b:#04x}")
@@ -94,6 +100,7 @@ class SpheroCore:
     """
 
     def __init__(self, mac_address: str):
+        logger.debug("Init Sphero Core")
         self.mac_address = mac_address
         self.delegate = SpheroDelegate()
         self.peripheral = Peripheral(self.mac_address, ADDR_TYPE_RANDOM)
@@ -106,6 +113,7 @@ class SpheroCore:
         desc.write(b"\x01\x00", withResponse=True)
 
         self._sequence = 0
+        logger.debug("Sphero Core: successful initialization")
 
     def __del__(self):
         # ignoring any exception
@@ -136,6 +144,7 @@ class SpheroCore:
         :param timeout: timeout for waiting response from device
         :return Packet: response packet
         """
+        logger.debug(f"Send {packet}")
         packet.sequence = self.sequence
         self.ch_api_v2.write(packet.build(), withResponse=True)
 
