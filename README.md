@@ -12,5 +12,24 @@ For using this library need bluepy and libgtk2.0-dev.
 # pip install bluepy
 ```
 
+# Example
+```python
+from time import sleep
+
+from pysphero.core import Sphero
+
+
+def main():
+    sphero = Sphero(mac_address='aa:bb:cc:dd:ee:ff')
+    sphero.power.wake()
+    sleep(2)
+    sphero.power.enter_soft_sleep()
+
+
+if __name__ == '__main__':
+    main()
+
+```
+
 # Unknown
 Packet contains sourceID and targetID. Their meaning is unknown.
