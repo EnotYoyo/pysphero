@@ -15,6 +15,15 @@ class DirectionRawMotor(Enum):
     reverse = 0x02
 
 
+class StabilizationIndex(Enum):
+    no_control_system = 0x00
+    full_control_system = 0x01
+    pitch_control_system = 0x02
+    roll_control_system = 0x03
+    yaw_control_system = 0x04
+    speed_and_yaw_control_system = 0x05
+
+
 class DrivingCommand(Enum):
     raw_motor = 0x01
     set_ackermann_steering_parameters = 0x02
@@ -27,15 +36,6 @@ class DrivingCommand(Enum):
     rc_car_drive = 0x09
     drive_to_position = 0x0a
     set_stabilization = 0x0c
-
-
-class StabilizationIndex(Enum):
-    no_control_system = 0x00
-    full_control_system = 0x01
-    pitch_control_system = 0x02
-    roll_control_system = 0x03
-    yaw_control_system = 0x04
-    speed_and_yaw_control_system = 0x05
 
 
 class Driving(DeviceApiABC):
