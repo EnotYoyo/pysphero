@@ -62,8 +62,8 @@ class UserIO(DeviceApiABC):
 
     def set_all_leds_8_bit_mask(
             self,
-            front_color: Color = Color(0x00, 0x00, 0x00),
-            back_color: Color = Color(0x00, 0x00, 0x00),
+            front_color: Color = Color(),
+            back_color: Color = Color(),
     ):
         """
         Set leds colors
