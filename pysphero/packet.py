@@ -120,7 +120,6 @@ class Packet:
 
         calc_checksum = packet.checksum
         if calc_checksum != checksum:
-            print(repr(packet))
             raise PySpheroRuntimeError(
                 f"Bad response checksum. (Expected: {checksum:#04x}, obtained: {calc_checksum:#04x})"
             )

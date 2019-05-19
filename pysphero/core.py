@@ -14,6 +14,7 @@ from pysphero.helpers import cached_property
 from pysphero.packet import Packet
 from pysphero.power import Power
 from pysphero.system_info import SystemInfo
+from pysphero.user_io import UserIO
 
 logger = logging.getLogger(__name__)
 
@@ -200,3 +201,7 @@ class Sphero:
     @cached_property
     def api_processor(self) -> ApiProcessor:
         return ApiProcessor(sphero_core=self.sphero_core)
+
+    @cached_property
+    def user_io(self) -> UserIO:
+        return UserIO(sphero_core=self.sphero_core)
