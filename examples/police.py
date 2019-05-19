@@ -1,6 +1,7 @@
 from time import sleep
 
 from pysphero.core import Sphero
+from pysphero.user_io import Color
 
 
 def main():
@@ -8,9 +9,9 @@ def main():
     sphero = Sphero(mac_address=mac_address)
     sphero.power.wake()
     for i in range(20):
-        sphero.user_io.set_all_leds_8_bit_mask(back_blue=255)
+        sphero.user_io.set_all_leds_8_bit_mask(back_color=Color(blue=0xff))
         sleep(0.25)
-        sphero.user_io.set_all_leds_8_bit_mask(front_red=255)
+        sphero.user_io.set_all_leds_8_bit_mask(front_color=Color(red=0xff))
         sleep(0.25)
 
     sleep(5)

@@ -1,6 +1,16 @@
 from enum import Enum
+from typing import NamedTuple
 
 from pysphero.device_api import DeviceApiABC, DeviceId
+
+
+class Color(NamedTuple):
+    red: int = 0x00
+    green: int = 0x00
+    blue: int = 0x00
+
+    def to_list(self):
+        return [self.red & 0xff, self.green & 0xff, self.blue & 0xff]
 
 
 class Led(Enum):
@@ -52,12 +62,8 @@ class UserIO(DeviceApiABC):
 
     def set_all_leds_8_bit_mask(
             self,
-            front_red: int = 0x00,
-            front_green: int = 0x00,
-            front_blue: int = 0x00,
-            back_red: int = 0x00,
-            back_green: int = 0x00,
-            back_blue: int = 0x00,
+            front_color: Color = Color(0x00, 0x00, 0x00),
+            back_color: Color = Color(0x00, 0x00, 0x00),
     ):
         """
         Set leds colors
@@ -65,17 +71,13 @@ class UserIO(DeviceApiABC):
         note: this command is supported Sphero Bolt.
         For another toys use set_all_leds
 
-        :param front_red:
-        :param front_green:
-        :param front_blue:
-        :param back_red:
-        :param back_green:
-        :param back_blue:
+        :param Color front_color:
+        :param Color back_color:
         :return:
         """
         leds = Led.all.value
         self.request(
             command_id=UserIOCommand.set_all_leds_8_bit_mask,
-            data=[leds, front_red, front_green, front_blue, back_red, back_green, back_blue],
+            data=[leds, *front_color.to_list(), *back_color.to_list()],
             target_id=0x11,
         )
