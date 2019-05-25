@@ -1,8 +1,7 @@
 import contextlib
 import logging
 import struct
-from collections import namedtuple
-from typing import List
+from typing import List, NamedTuple
 
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
 
@@ -18,14 +17,12 @@ from pysphero.user_io import UserIO
 
 logger = logging.getLogger(__name__)
 
-PeripheralPreferredConnectionParameters = namedtuple(
-    "PeripheralPreferredConnectionParameters", (
-        "min_con_interval",
-        "max_con_interval",
-        "slave_latency",
-        "connection_supervision_timeout_multiplier",
-    )
-)
+
+class PeripheralPreferredConnectionParameters(NamedTuple):
+    min_con_interval: int
+    max_con_interval: int
+    slave_latency: int
+    connection_supervision_timeout_multiplier: int
 
 
 class SpheroDelegate(DefaultDelegate):

@@ -1,15 +1,13 @@
-from collections import namedtuple
 from enum import Enum
+from typing import NamedTuple
 
 from pysphero.device_api import DeviceApiABC, DeviceId
 
-Version = namedtuple(
-    "Version", (
-        "major",
-        "minor",
-        "revision",
-    )
-)
+
+class Version(NamedTuple):
+    major: int
+    minor: int
+    revision: int
 
 
 class SystemInfoCommand(Enum):
