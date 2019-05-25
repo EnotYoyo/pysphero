@@ -79,10 +79,12 @@ class SpheroDelegate(DefaultDelegate):
                 continue
 
             if self.is_escaping:
-                self.is_escaping = False
                 if b not in Packet.escaped_bytes:
                     raise PySpheroRuntimeError(f"Bad escaping byte {b:#04x}")
-                b |= Packet.escape_mask
+
+                self.data.append(b | Packet.escape_mask)
+                self.is_escaping = False
+                continue
 
             self.data.append(b)
 
