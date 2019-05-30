@@ -68,7 +68,7 @@ class Packet:
 
     @property
     def id(self) -> Tuple:
-        return self.device_id, self.command_id, self.sequence
+        return self.device_id, self.command_id
 
     def __str__(self) -> str:
         return f"Packet(flg: {self.flags:#04x} did: {self.device_id:#04x} cid: {self.command_id:#04x} " \

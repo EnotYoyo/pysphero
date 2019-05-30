@@ -1,5 +1,7 @@
 import abc
+from concurrent.futures import Future
 from enum import Enum
+from typing import Callable
 
 from pysphero.packet import Packet
 
@@ -21,10 +23,25 @@ class DeviceApiABC(abc.ABC):
     def __init__(self, sphero_core):
         self.sphero_core = sphero_core
 
-    def request(self, command_id: Enum, with_api_error: bool = True, timeout: int = 10, **kwargs) -> Packet:
+    def request(self, command_id: Enum, with_api_error: bool = True, timeout: float = 10, **kwargs) -> Packet:
         return self.sphero_core.request(
             self.packet(command_id=command_id.value, **kwargs),
             with_api_error=with_api_error,
+            timeout=timeout,
+        )
+
+    def notify(
+            self,
+            command_id: Enum,
+            callback: Callable,
+            sleep_time: float = 0.1,
+            timeout: float = 10,
+            **kwargs
+    ) -> Future:
+        return self.sphero_core.notify(
+            self.packet(command_id=command_id.value, **kwargs),
+            callback=callback,
+            sleep_time=sleep_time,
             timeout=timeout,
         )
 

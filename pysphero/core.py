@@ -1,7 +1,10 @@
 import contextlib
 import logging
 import struct
-from typing import List, NamedTuple
+import time
+from concurrent.futures import Future
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import List, NamedTuple, Callable
 
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
 
@@ -96,12 +99,13 @@ class SpheroDelegate(DefaultDelegate):
 
 
 class SpheroCore:
+    STOP_NOTIFY = object()
     """
     Core class for communication with peripheral device
     In the future, another bluetooth library can be replaced.
     """
 
-    def __init__(self, mac_address: str):
+    def __init__(self, mac_address: str, max_workers: int = 10):
         logger.debug("Init Sphero Core")
         self.mac_address = mac_address
         self.delegate = SpheroDelegate()
@@ -115,13 +119,26 @@ class SpheroCore:
         desc.write(b"\x01\x00", withResponse=True)
 
         self._sequence = 0
+
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        self._running = True  # disable receiver thread
+        self._notify_futures = {}  # features of notify
+        self._executor.submit(self._receiver)
         logger.debug("Sphero Core: successful initialization")
 
-    def __del__(self):
+    def close(self):
+        self._running = False
+        with contextlib.suppress(Exception):
+            self._executor.shutdown(wait=False)
         # ignoring any exception
         # because it does not matter
         with contextlib.suppress(Exception):
             self.peripheral.disconnect()
+
+    def _receiver(self):
+        sleep = 0.05
+        while self._running:
+            self.peripheral.waitForNotifications(sleep)
 
     @property
     def sequence(self) -> int:
@@ -137,6 +154,35 @@ class SpheroCore:
     def get_descriptor(self, characteristic: Characteristic, uuid: int or str) -> Descriptor:
         return characteristic.getDescriptors(forUUID=uuid)[0]
 
+    def notify(self, packet: Packet, callback: Callable, sleep_time: float = 0.1, timeout: float = 10):
+        packet_id = packet.id
+        if packet_id in self._notify_futures:
+            raise PySpheroRuntimeError("Notify thread already working")
+
+        def worker():
+            _timeout = timeout
+            while _timeout:
+                response = self.delegate.packets.pop(packet_id, None)
+                if response:
+                    _timeout = timeout
+                    if callback(response) is SpheroCore.STOP_NOTIFY:
+                        break
+
+                time.sleep(sleep_time)
+                _timeout -= sleep_time
+            self._notify_futures.pop(packet_id, None)
+
+        future = self._executor.submit(worker)
+        self._notify_futures[packet_id] = future
+        return future
+
+    def cancel_notify(self, packet: Packet):
+        future: Future = self._notify_futures.pop(packet.id, None)
+        if future is None:
+            raise PySpheroRuntimeError("Future not found")
+
+        future.cancel()
+
     def request(self, packet: Packet, with_api_error: bool = True, timeout: int = 10) -> Packet:
         """
         Method allow send request packet and get response packet
@@ -150,7 +196,7 @@ class SpheroCore:
         packet.sequence = self.sequence
         self.ch_api_v2.write(packet.build(), withResponse=True)
 
-        sleep = 0.1  # must be small for correct calculate timeout
+        sleep = 0.1
         while timeout > 0:
             response = self.delegate.packets.pop(packet.id, None)
             if response:
@@ -158,8 +204,8 @@ class SpheroCore:
                     raise PySpheroApiError(response.api_error)
                 return response
 
+            time.sleep(sleep)
             timeout -= sleep
-            self.peripheral.waitForNotifications(sleep)
 
         raise PySpheroTimeoutError(f"Timeout error for response of {packet}")
 
@@ -171,6 +217,9 @@ class Sphero:
 
     def __init__(self, mac_address: str):
         self.sphero_core = SpheroCore(mac_address)
+
+    def __del__(self):
+        self.sphero_core.close()
 
     @property
     def name(self) -> str:

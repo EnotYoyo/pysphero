@@ -1,3 +1,4 @@
+import struct
 from typing import Callable
 
 
@@ -16,3 +17,7 @@ class UnknownEnumMixing:
     @classmethod
     def _missing_(cls, value):
         return cls.unknown
+
+
+def float_from_bytes(data):
+    return struct.unpack(">f", bytearray(data))[0]
