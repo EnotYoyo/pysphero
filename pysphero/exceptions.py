@@ -1,6 +1,10 @@
 from pysphero.constants import Api2Error
 
 
+class PySpheroException(Exception):
+    ...
+
+
 class PySpheroRuntimeError(RuntimeError):
     ...
 

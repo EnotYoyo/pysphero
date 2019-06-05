@@ -11,10 +11,11 @@ from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descr
 from pysphero.api_processor import ApiProcessor
 from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic
 from pysphero.driving import Driving
-from pysphero.exceptions import PySpheroApiError, PySpheroRuntimeError, PySpheroTimeoutError
+from pysphero.exceptions import PySpheroApiError, PySpheroRuntimeError, PySpheroTimeoutError, PySpheroException
 from pysphero.helpers import cached_property
 from pysphero.packet import Packet
 from pysphero.power import Power
+from pysphero.sensor import Sensor
 from pysphero.system_info import SystemInfo
 from pysphero.user_io import UserIO
 
@@ -128,17 +129,32 @@ class SpheroCore:
 
     def close(self):
         self._running = False
-        with contextlib.suppress(Exception):
-            self._executor.shutdown(wait=False)
+        self._executor.shutdown(wait=False)
         # ignoring any exception
         # because it does not matter
         with contextlib.suppress(Exception):
             self.peripheral.disconnect()
 
     def _receiver(self):
+        logger.debug("Start receiver")
+
         sleep = 0.05
         while self._running:
             self.peripheral.waitForNotifications(sleep)
+
+        logger.debug("Stop receiver")
+
+    def _get_response(self, packet: Packet, sleep_time: float = 0.1, timeout: float = 10):
+        while self._running:
+            response = self.delegate.packets.pop(packet.id, None)
+            if response:
+                return response
+
+            timeout -= sleep_time or 0.01  # protect of 0 sleep_time
+            if timeout <= 0:
+                raise PySpheroTimeoutError(f"Timeout error for response of {packet}")
+
+            time.sleep(sleep_time)
 
     @property
     def sequence(self) -> int:
@@ -157,20 +173,18 @@ class SpheroCore:
     def notify(self, packet: Packet, callback: Callable, sleep_time: float = 0.1, timeout: float = 10):
         packet_id = packet.id
         if packet_id in self._notify_futures:
-            raise PySpheroRuntimeError("Notify thread already working")
+            raise PySpheroRuntimeError("Notify thread already exists")
 
         def worker():
-            _timeout = timeout
-            while _timeout:
-                response = self.delegate.packets.pop(packet_id, None)
-                if response:
-                    _timeout = timeout
-                    if callback(response) is SpheroCore.STOP_NOTIFY:
-                        break
+            logger.debug(f"[NOTIFY_WORKER {packet}] Start")
 
-                time.sleep(sleep_time)
-                _timeout -= sleep_time
-            self._notify_futures.pop(packet_id, None)
+            while self._running:
+                response = self._get_response(packet, sleep_time=sleep_time, timeout=timeout)
+                logger.debug(f"[NOTIFY_WORKER {packet}] Received {response}")
+                if callback(response) is SpheroCore.STOP_NOTIFY:
+                    logger.debug(f"[NOTIFY_WORKER {packet}] Received STOP_NOTIFY")
+                    self._notify_futures.pop(packet_id, None)
+                    break
 
         future = self._executor.submit(worker)
         self._notify_futures[packet_id] = future
@@ -181,9 +195,10 @@ class SpheroCore:
         if future is None:
             raise PySpheroRuntimeError("Future not found")
 
+        logger.debug(f"[NOTIFY_WORKER {packet}] Cancel")
         future.cancel()
 
-    def request(self, packet: Packet, with_api_error: bool = True, timeout: int = 10) -> Packet:
+    def request(self, packet: Packet, with_api_error: bool = True, timeout: float = 10) -> Packet:
         """
         Method allow send request packet and get response packet
 
@@ -196,18 +211,10 @@ class SpheroCore:
         packet.sequence = self.sequence
         self.ch_api_v2.write(packet.build(), withResponse=True)
 
-        sleep = 0.1
-        while timeout > 0:
-            response = self.delegate.packets.pop(packet.id, None)
-            if response:
-                if with_api_error and response.api_error is not Api2Error.success:
-                    raise PySpheroApiError(response.api_error)
-                return response
-
-            time.sleep(sleep)
-            timeout -= sleep
-
-        raise PySpheroTimeoutError(f"Timeout error for response of {packet}")
+        response = self._get_response(packet, timeout=timeout)
+        if with_api_error and response.api_error is not Api2Error.success:
+            raise PySpheroApiError(response.api_error)
+        return response
 
 
 class Sphero:
@@ -216,9 +223,24 @@ class Sphero:
     """
 
     def __init__(self, mac_address: str):
-        self.sphero_core = SpheroCore(mac_address)
+        self.mac_address = mac_address
+        self._sphero_core = None
 
-    def __del__(self):
+    @property
+    def sphero_core(self):
+        if self._sphero_core is None:
+            raise PySpheroException("Use Sphero as context manager")
+        return self._sphero_core
+
+    @sphero_core.setter
+    def sphero_core(self, value):
+        self._sphero_core = value
+
+    def __enter__(self):
+        self.sphero_core = SpheroCore(self.mac_address)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.sphero_core.close()
 
     @property
@@ -253,3 +275,7 @@ class Sphero:
     @cached_property
     def user_io(self) -> UserIO:
         return UserIO(sphero_core=self.sphero_core)
+
+    @cached_property
+    def sensor(self) -> Sensor:
+        return Sensor(sphero_core=self.sphero_core)

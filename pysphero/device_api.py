@@ -45,6 +45,10 @@ class DeviceApiABC(abc.ABC):
             timeout=timeout,
         )
 
+    def cancel_notify(self, command_id):
+        packet = self.packet(command_id=command_id.value)
+        self.sphero_core.cancel_notify(packet)
+
     def packet(self, **kwargs):
         packet = Packet(
             device_id=self.device_id.value,

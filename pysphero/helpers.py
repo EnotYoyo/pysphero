@@ -1,4 +1,5 @@
 import struct
+from itertools import zip_longest
 from typing import Callable
 
 
@@ -21,3 +22,10 @@ class UnknownEnumMixing:
 
 def float_from_bytes(data):
     return struct.unpack(">f", bytearray(data))[0]
+
+
+def grouper(iterable, n, fillvalue=None):
+    """Collect data into fixed-length chunks or blocks"""
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
