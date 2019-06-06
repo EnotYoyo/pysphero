@@ -12,6 +12,12 @@ For using this library need bluepy and libgtk2.0-dev.
 # pip install bluepy
 ```
 
+# Install
+For install `pysphero` use `pip`:
+```bash
+# pip install pysphero
+```
+
 # Example
 ```python
 from time import sleep
