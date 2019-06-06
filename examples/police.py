@@ -5,18 +5,18 @@ from pysphero.user_io import Color
 
 
 def main():
-    mac_address = 'aa:bb:cc:dd:ee:ff'
-    sphero = Sphero(mac_address=mac_address)
-    sphero.power.wake()
-    for i in range(20):
-        sphero.user_io.set_all_leds_8_bit_mask(back_color=Color(blue=0xff))
-        sleep(0.25)
-        sphero.user_io.set_all_leds_8_bit_mask(front_color=Color(red=0xff))
-        sleep(0.25)
+    mac_address = "aa:bb:cc:dd:ee:ff"
+    with Sphero(mac_address=mac_address) as sphero:
+        sphero.power.wake()
+        for i in range(20):
+            sphero.user_io.set_all_leds_8_bit_mask(back_color=Color(blue=0xff))
+            sleep(0.25)
+            sphero.user_io.set_all_leds_8_bit_mask(front_color=Color(red=0xff))
+            sleep(0.25)
 
-    sleep(5)
-    sphero.power.enter_soft_sleep()
+        sleep(5)
+        sphero.power.enter_soft_sleep()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

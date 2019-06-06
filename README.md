@@ -20,10 +20,10 @@ from pysphero.core import Sphero
 
 
 def main():
-    sphero = Sphero(mac_address='aa:bb:cc:dd:ee:ff')
-    sphero.power.wake()
-    sleep(2)
-    sphero.power.enter_soft_sleep()
+    with Sphero(mac_address='aa:bb:cc:dd:ee:ff') as sphero:
+        sphero.power.wake()
+        sleep(2)
+        sphero.power.enter_soft_sleep()
 
 
 if __name__ == '__main__':
