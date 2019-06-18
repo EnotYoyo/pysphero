@@ -85,6 +85,25 @@ class Packet:
             return Api2Error(self.data.pop(0))  # delete first byte from data
         return Api2Error.success
 
+    @staticmethod
+    def _unescape_response_data(response_data) -> List[int]:
+        raw_data = []
+
+        iter_response_data = iter(response_data)
+        for b in iter_response_data:
+            # escaping byte allowing escaping start/end/escaping bytes
+            if b == Packet.escape:
+                # next byte is escaping
+                b = next(iter_response_data, None)
+                if b not in Packet.escaped_bytes:
+                    raise PySpheroRuntimeError(f"Bad escaping byte {b:#04x}")
+
+                b |= Packet.escape_mask
+
+            raw_data.append(b)
+
+        return raw_data
+
     @classmethod
     def from_response(cls, response_data: List[int]) -> "Packet":
         """
@@ -92,6 +111,7 @@ class Packet:
         :param response_data: raw data from peripheral
         :return Packet: response packet
         """
+        response_data = Packet._unescape_response_data(response_data)
         start, flags, *data, checksum, end = response_data
         if start != cls.start or end != cls.end:
             raise PySpheroRuntimeError(

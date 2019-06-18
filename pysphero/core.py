@@ -39,17 +39,6 @@ class SpheroDelegate(DefaultDelegate):
         super().__init__()
         self.data = []
         self.packets = {}
-        self._is_escaping = False
-
-    @property
-    def is_escaping(self) -> bool:
-        return self._is_escaping
-
-    @is_escaping.setter
-    def is_escaping(self, value: bool):
-        if value and self._is_escaping:
-            raise PySpheroRuntimeError("Bad escaping byte position")
-        self._is_escaping = value
 
     def build_packet(self):
         """
@@ -72,24 +61,6 @@ class SpheroDelegate(DefaultDelegate):
         """
         for b in data:
             logger.debug(f"Received {b:#04x}")
-            # packet always starting from start byte
-            if len(self.data) == 0 and b != Packet.start:
-                raise PySpheroRuntimeError(f"Invalid first byte {b:#04x}")
-
-            # escaping byte allowing escaping start/end/escaping bytes
-            if b == Packet.escape:
-                # next byte is escaping
-                self.is_escaping = True
-                continue
-
-            if self.is_escaping:
-                if b not in Packet.escaped_bytes:
-                    raise PySpheroRuntimeError(f"Bad escaping byte {b:#04x}")
-
-                self.data.append(b | Packet.escape_mask)
-                self.is_escaping = False
-                continue
-
             self.data.append(b)
 
             # packet always ending with end byte
