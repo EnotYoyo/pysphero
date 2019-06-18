@@ -27,7 +27,8 @@ setup(
     ],
     extras_require={
         "tests": [
-
+            "pytest==4.2.0",
+            "pytest-cov==2.6.1",
         ],
     },
     keywords=["sphero", "sphero-ble", "bolt"],
