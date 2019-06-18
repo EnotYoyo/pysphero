@@ -14,7 +14,6 @@ def main():
             sphero.user_io.set_all_leds_8_bit_mask(front_color=Color(red=0xff))
             sleep(0.25)
 
-        sleep(5)
         sphero.power.enter_soft_sleep()
 
 
