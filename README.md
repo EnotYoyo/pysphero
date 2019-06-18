@@ -1,4 +1,5 @@
 # PySphero
+[![Build Status](https://travis-ci.org/EnotYoyo/pysphero.svg?branch=master)](https://travis-ci.org/EnotYoyo/pysphero)
 
 This is an unofficial Sphero library for BLE toys.   
 The Sphero protocol is reverse-engineered using the official Sphero Edu application for Android and [this](https://github.com/igbopie/spherov2.js) library. 
