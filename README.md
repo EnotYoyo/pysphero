@@ -1,4 +1,5 @@
 # PySphero
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pysphero.svg)](https://pypi.org/project/pysphero/)
 [![Build Status](https://travis-ci.org/EnotYoyo/pysphero.svg?branch=master)](https://travis-ci.org/EnotYoyo/pysphero)
 
 This is an unofficial Sphero library for BLE toys.   
