@@ -91,11 +91,11 @@ class SystemInfo(DeviceApiABC):
         """
         ???
 
-        :return str:
+        :return str: Celsius temperature
         """
 
         response = self.request(SystemInfoCommand.get_nordic_temperature)
-        return int.from_bytes(response.data, "big")
+        return int.from_bytes(response.data, "big") // 4
 
     def get_stats_id(self) -> int:
         """

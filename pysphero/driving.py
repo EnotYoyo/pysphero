@@ -9,6 +9,12 @@ class Direction(Enum):
     reverse = 0x01
 
 
+class TankDriveDirection(Enum):
+    forward = 0x00
+    in_place = 0x08
+    reverse = 0x18
+
+
 class DirectionRawMotor(Enum):
     disable = 0x00
     forward = 0x01
@@ -112,5 +118,24 @@ class Driving(DeviceApiABC):
         """
         self.request(
             DrivingCommand.reset_yaw,
+            target_id=0x12,
+        )
+
+    def tank_drive(
+            self,
+            left_speed: int = 0x00,
+            right_speed=0x00,
+            direction: TankDriveDirection = TankDriveDirection.forward,
+    ):
+        """
+        ??? todo: this method not exist in android app
+        :param left_speed:
+        :param right_speed:
+        :param direction:
+        :return:
+        """
+        self.request(
+            DrivingCommand.tank_drive,
+            data=[left_speed, right_speed, direction.value],
             target_id=0x12,
         )
