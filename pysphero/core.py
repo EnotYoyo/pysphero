@@ -8,6 +8,7 @@ from typing import List, NamedTuple, Callable
 
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
 
+from pysphero.animatronics import Animatronics
 from pysphero.api_processor import ApiProcessor
 from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic
 from pysphero.driving import Driving
@@ -250,3 +251,7 @@ class Sphero:
     @cached_property
     def sensor(self) -> Sensor:
         return Sensor(sphero_core=self.sphero_core)
+
+    @cached_property
+    def animatronics(self) -> Animatronics:
+        return Animatronics(sphero_core=self.sphero_core)
