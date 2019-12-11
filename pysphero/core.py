@@ -9,7 +9,7 @@ from typing import List, NamedTuple, Callable
 
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
 
-from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic
+from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic, Toy
 from pysphero.device_api import Animatronics, Sensor, UserIO, ApiProcessor, Power, SystemInfo
 from pysphero.driving import Driving
 from pysphero.exceptions import PySpheroApiError, PySpheroRuntimeError, PySpheroTimeoutError, PySpheroException
@@ -191,8 +191,9 @@ class Sphero:
     High-level API for communicate with sphero toy
     """
 
-    def __init__(self, mac_address: str):
+    def __init__(self, mac_address: str, toy_type: Toy = Toy.unknown):
         self.mac_address = mac_address
+        self.type = toy_type
         self._sphero_core = None
 
     @property
@@ -207,6 +208,8 @@ class Sphero:
 
     def __enter__(self):
         self.sphero_core = SpheroCore(self.mac_address)
+        # if self.type is Toy.unknown:
+        #     self.type = TOY_BY_PREFIX.get(self.name[:3], Toy.unknown)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -214,6 +217,7 @@ class Sphero:
 
     @property
     def name(self) -> str:
+        raise NotImplementedError("This method is unstable")
         device_name = self.sphero_core.get_characteristic(uuid=GenericCharacteristic.device_name.value)
         name: bytes = device_name.read()
         return name.decode("utf-8")
