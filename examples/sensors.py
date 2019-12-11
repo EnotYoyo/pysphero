@@ -2,7 +2,7 @@ from time import sleep
 from typing import Dict
 
 from pysphero.core import Sphero
-from pysphero.sensor import CoreTime, Quaternion
+from pysphero.device_api.sensor import CoreTime, Quaternion
 
 
 def notify_callback(data: Dict):
