@@ -1,7 +1,8 @@
 from enum import Enum
 
-from pysphero.device_api import DeviceApiABC, DeviceId
 from pysphero.helpers import UnknownEnumMixing
+
+from .device_api import DeviceApiABC, DeviceId
 
 
 class BatteryVoltageStates(UnknownEnumMixing, Enum):

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pysphero.device_api import DeviceApiABC, DeviceId
+from .device_api import DeviceApiABC, DeviceId
 
 
 class ApiProcessorCommand(Enum):

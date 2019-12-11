@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import NamedTuple
 
-from pysphero.device_api import DeviceApiABC, DeviceId
+from .device_api import DeviceApiABC, DeviceId
 
 
 class Color(NamedTuple):

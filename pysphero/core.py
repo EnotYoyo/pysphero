@@ -9,17 +9,12 @@ from typing import List, NamedTuple, Callable
 
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
 
-from pysphero.animatronics import Animatronics
-from pysphero.api_processor import ApiProcessor
 from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic
+from pysphero.device_api import Animatronics, Sensor, UserIO, ApiProcessor, Power, SystemInfo
 from pysphero.driving import Driving
 from pysphero.exceptions import PySpheroApiError, PySpheroRuntimeError, PySpheroTimeoutError, PySpheroException
 from pysphero.helpers import cached_property
 from pysphero.packet import Packet
-from pysphero.power import Power
-from pysphero.sensor import Sensor
-from pysphero.system_info import SystemInfo
-from pysphero.user_io import UserIO
 
 logger = logging.getLogger(__name__)
 
