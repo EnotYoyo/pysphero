@@ -26,3 +26,28 @@ class Api2Error(UnknownEnumMixing, Enum):
     bad_target_id = 0x09
     target_unavailable = 0x0a
     unknown = 0xff
+
+
+class Toy(Enum):
+    unknown = "Unknown"
+
+    sphero_sprk = "Sphero SPRK+"
+    sphero_bolt = "Sphero Bolt"
+    sphero_mini = "Sphero MINI"
+    ollie = "Ollie"
+    r2d2 = "R2D2"
+    r2q5 = "R2Q5"
+    bb8 = "BB8"
+    bb9e = "BB9E"
+
+
+TOY_BY_PREFIX = {
+    "SK-": Toy.sphero_sprk,
+    "SB-": Toy.sphero_bolt,
+    "SM-": Toy.sphero_mini,
+    "2B-": Toy.ollie,
+    "D2-": Toy.r2d2,
+    "Q5-": Toy.r2q5,
+    "BB-": Toy.bb8,
+    "GB-": Toy.bb9e,
+}

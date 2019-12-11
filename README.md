@@ -24,11 +24,11 @@ To install `pysphero` use `pip`:
 ```python
 from time import sleep
 
-from pysphero.core import Sphero
+from pysphero.utils import toy_scanner
 
 
 def main():
-    with Sphero(mac_address='aa:bb:cc:dd:ee:ff') as sphero:
+    with toy_scanner() as sphero:
         sphero.power.wake()
         sleep(2)
         sphero.power.enter_soft_sleep()
