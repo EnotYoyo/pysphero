@@ -1,8 +1,9 @@
 import struct
 from enum import Enum
 
-from pysphero.device_api import DeviceApiABC, DeviceId
 from pysphero.helpers import float_from_bytes
+
+from .device_api import DeviceApiABC, DeviceId
 
 
 class AnimatronicsCommand(Enum):

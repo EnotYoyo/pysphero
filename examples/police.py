@@ -1,7 +1,7 @@
 from time import sleep
 
 from pysphero.core import Sphero
-from pysphero.user_io import Color
+from pysphero.device_api.user_io import Color
 
 
 def main():

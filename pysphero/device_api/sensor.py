@@ -1,9 +1,10 @@
 from enum import Enum
 from typing import NamedTuple, Callable, Type, Tuple, List
 
-from pysphero.device_api import DeviceApiABC, DeviceId
 from pysphero.helpers import float_from_bytes, grouper
 from pysphero.packet import Packet
+
+from .device_api import DeviceApiABC, DeviceId
 
 
 class SensorParameter(NamedTuple):
@@ -40,7 +41,7 @@ class Attitude(_Sensor):
     yaw = SensorParameter(0x10000, -179.0, 180.0)
 
 
-class Accelerometer(_Sensor):
+class Accelerometer (_Sensor):
     x = SensorParameter(0x8000, -8.19, 8.19)
     y = SensorParameter(0x4000, -8.19, 8.19)
     z = SensorParameter(0x2000, -8.19, 8.19)

@@ -5,14 +5,14 @@ class PySpheroException(Exception):
     ...
 
 
-class PySpheroRuntimeError(RuntimeError):
+class PySpheroRuntimeError(PySpheroException):
     ...
 
 
-class PySpheroTimeoutError(TimeoutError):
+class PySpheroTimeoutError(PySpheroException):
     ...
 
 
-class PySpheroApiError(Exception):
+class PySpheroApiError(PySpheroException):
     def __init__(self, api_error: Api2Error):
         super().__init__(f"Api reponse error: {api_error.name}")
