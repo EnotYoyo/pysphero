@@ -4,6 +4,7 @@ import struct
 import time
 from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
+from threading import Event
 from typing import List, NamedTuple, Callable
 
 from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
@@ -94,13 +95,14 @@ class SpheroCore:
         self._sequence = 0
 
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
-        self._running = True  # disable receiver thread
+        self._running = Event()  # disable receiver thread
+        self._running.set()
         self._notify_futures = {}  # features of notify
         self._executor.submit(self._receiver)
         logger.debug("Sphero Core: successful initialization")
 
     def close(self):
-        self._running = False
+        self._running.clear()
         self._executor.shutdown(wait=False)
         # ignoring any exception
         # because it does not matter
@@ -111,13 +113,13 @@ class SpheroCore:
         logger.debug("Start receiver")
 
         sleep = 0.05
-        while self._running:
+        while self._running.is_set():
             self.peripheral.waitForNotifications(sleep)
 
         logger.debug("Stop receiver")
 
     def _get_response(self, packet: Packet, sleep_time: float = 0.1, timeout: float = 10):
-        while self._running:
+        while self._running.is_set():
             response = self.delegate.packets.pop(packet.id, None)
             if response:
                 return response
@@ -150,7 +152,7 @@ class SpheroCore:
         def worker():
             logger.debug(f"[NOTIFY_WORKER {packet}] Start")
 
-            while self._running:
+            while self._running.is_set():
                 response = self._get_response(packet, sleep_time=sleep_time, timeout=timeout)
                 logger.debug(f"[NOTIFY_WORKER {packet}] Received {response}")
                 if callback(response) is SpheroCore.STOP_NOTIFY:
