@@ -87,8 +87,6 @@ class SpheroCore:
         desc = self.get_descriptor(self.ch_api_v2, GenericCharacteristic.client_characteristic_configuration.value)
         desc.write(b"\x01\x00", withResponse=True)
 
-        self._sequence = 0
-
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._running = Event()  # disable receiver thread
         self._running.set()
@@ -124,14 +122,6 @@ class SpheroCore:
                 raise PySpheroTimeoutError(f"Timeout error for response of {packet}")
 
             time.sleep(sleep_time)
-
-    @property
-    def sequence(self) -> int:
-        """
-        Autoincrement sequence number of packet
-        """
-        self._sequence = (self._sequence + 1) % 256
-        return self._sequence
 
     def get_characteristic(self, uuid: int or str) -> Characteristic:
         return self.peripheral.getCharacteristics(uuid=uuid)[0]
@@ -177,7 +167,6 @@ class SpheroCore:
         :return Packet: response packet
         """
         logger.debug(f"Send {packet}")
-        packet.sequence = self.sequence
         self.ch_api_v2.write(packet.build(), withResponse=True)
 
         response = self._get_response(packet, timeout=timeout)
