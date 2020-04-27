@@ -21,9 +21,9 @@ class BluepyDelegate(DefaultDelegate):
     Getting bytes from peripheral and build packets
     """
 
-    def __init__(self, packet_collector):
+    def __init__(self, packet_collector: PacketCollector):
         super().__init__()
-        self.packet_collector: PacketCollector = packet_collector
+        self.packet_collector = packet_collector
 
     def handleNotification(self, handle: int, data: List[int]):
         """
@@ -53,48 +53,15 @@ class BluepyAdapter(AbstractBleAdapter):
         desc = self._get_descriptor(self.ch_api_v2, GenericCharacteristic.client_characteristic_configuration.value)
         desc.write(b"\x01\x00", withResponse=True)
 
-        self._executor = ThreadPoolExecutor(max_workers=2)
-        self._running = Event()  # disable receiver thread
-        self._running.set()
-        self._notify_futures = {}  # features of notify
         self._executor.submit(self._receiver)
         logger.debug("Bluepy Adapter: successful initialization")
 
     def close(self):
-        self._running.clear()
-        self._executor.shutdown(wait=False)
+        super().close()
         # ignoring any exception
         # because it does not matter
         with contextlib.suppress(Exception):
             self.peripheral.disconnect()
-
-    def start_notify(self, packet: Packet, callback: Callable, timeout: float = 10):
-        packet_id = packet.id
-        if packet_id in self._notify_futures:
-            raise PySpheroRuntimeError("Notify thread already exists")
-
-        def worker():
-            logger.debug(f"[NOTIFY_WORKER {packet}] Start")
-
-            while self._running.is_set():
-                response = self.packet_collector.get_response(packet, timeout=timeout)
-                logger.debug(f"[NOTIFY_WORKER {packet}] Received {response}")
-                if callback(response) is BluepyAdapter.STOP_NOTIFY:
-                    logger.debug(f"[NOTIFY_WORKER {packet}] Received STOP_NOTIFY")
-                    self._notify_futures.pop(packet_id, None)
-                    break
-
-        future = self._executor.submit(worker)
-        self._notify_futures[packet_id] = future
-        return future
-
-    def stop_notify(self, packet: Packet):
-        future: Future = self._notify_futures.pop(packet.id, None)
-        if future is None:
-            raise PySpheroRuntimeError("Future not found")
-
-        logger.debug(f"[NOTIFY_WORKER {packet}] Cancel")
-        future.cancel()
 
     def write(self, packet: Packet, *, timeout: float = 10, raise_api_error: bool = True) -> Packet:
         logger.debug(f"Send {packet}")
