@@ -1,12 +1,14 @@
 import abc
 from typing import Callable
 
+from pysphero.bluetooth.packet_collector import PacketCollector
 from pysphero.packet import Packet
 
 
 class AbstractBleAdapter(abc.ABC):
     def __init__(self, mac_address):
         self.mac_address = mac_address
+        self.packet_collector = PacketCollector()
 
     def close(self):
         ...

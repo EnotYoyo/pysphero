@@ -1,6 +1,5 @@
 import contextlib
 import logging
-import time
 from concurrent.futures import ThreadPoolExecutor, Future
 from threading import Event
 from typing import List, Callable
@@ -8,8 +7,9 @@ from typing import List, Callable
 from bluepy.btle import DefaultDelegate, Peripheral, ADDR_TYPE_RANDOM, Characteristic, Descriptor
 
 from pysphero.bluetooth.ble_adapter import AbstractBleAdapter
+from pysphero.bluetooth.packet_collector import PacketCollector
 from pysphero.constants import SpheroCharacteristic, GenericCharacteristic, Api2Error
-from pysphero.exceptions import PySpheroRuntimeError, PySpheroTimeoutError, PySpheroApiError
+from pysphero.exceptions import PySpheroRuntimeError, PySpheroApiError
 from pysphero.packet import Packet
 
 logger = logging.getLogger(__name__)
@@ -21,20 +21,9 @@ class BluepyDelegate(DefaultDelegate):
     Getting bytes from peripheral and build packets
     """
 
-    def __init__(self):
+    def __init__(self, packet_collector):
         super().__init__()
-        self.data = []
-        self.packets = {}
-
-    def build_packet(self):
-        """
-        Create and save packet from raw bytes
-        """
-        logger.debug(f"Starting of packet build")
-
-        packet = Packet.from_response(self.data)
-        self.packets[packet.id] = packet
-        self.data = []
+        self.packet_collector: PacketCollector = packet_collector
 
     def handleNotification(self, handle: int, data: List[int]):
         """
@@ -45,25 +34,16 @@ class BluepyDelegate(DefaultDelegate):
         :param data: raw data
         :return:
         """
-        for b in data:
-            logger.debug(f"Received {b:#04x}")
-            self.data.append(b)
-
-            # packet always ending with end byte
-            if b == Packet.end:
-                if len(self.data) < 6:
-                    raise PySpheroRuntimeError(f"Very small packet {[hex(x) for x in self.data]}")
-                self.build_packet()
+        self.packet_collector.append_raw_data(data)
 
 
 class BluepyAdapter(AbstractBleAdapter):
     STOP_NOTIFY = object()
 
-    def __init__(self, mac_address, check_response_delta: float = 0.1):
+    def __init__(self, mac_address):
         logger.debug("Init Bluepy Adapter")
         super().__init__(mac_address)
-        self.check_response_delta = check_response_delta or 0.01  # protect of 0 sleep_time
-        self.delegate = BluepyDelegate()
+        self.delegate = BluepyDelegate(self.packet_collector)
         self.peripheral = Peripheral(self.mac_address, ADDR_TYPE_RANDOM)
         self.peripheral.setDelegate(self.delegate)
 
@@ -97,7 +77,7 @@ class BluepyAdapter(AbstractBleAdapter):
             logger.debug(f"[NOTIFY_WORKER {packet}] Start")
 
             while self._running.is_set():
-                response = self._get_response(packet, timeout=timeout)
+                response = self.packet_collector.get_response(packet, timeout=timeout)
                 logger.debug(f"[NOTIFY_WORKER {packet}] Received {response}")
                 if callback(response) is BluepyAdapter.STOP_NOTIFY:
                     logger.debug(f"[NOTIFY_WORKER {packet}] Received STOP_NOTIFY")
@@ -120,22 +100,10 @@ class BluepyAdapter(AbstractBleAdapter):
         logger.debug(f"Send {packet}")
         self.ch_api_v2.write(packet.build(), withResponse=True)
 
-        response = self._get_response(packet, timeout=timeout)
+        response = self.packet_collector.get_response(packet, timeout=timeout)
         if raise_api_error and response.api_error is not Api2Error.success:
             raise PySpheroApiError(response.api_error)
         return response
-
-    def _get_response(self, packet: Packet, timeout: float = 10):
-        while True:
-            response = self.delegate.packets.pop(packet.id, None)
-            if response:
-                return response
-
-            timeout -= self.check_response_delta
-            if timeout <= 0:
-                raise PySpheroTimeoutError(f"Timeout error for response of {packet}")
-
-            time.sleep(self.check_response_delta)
 
     def _receiver(self):
         logger.debug("Start receiver")
