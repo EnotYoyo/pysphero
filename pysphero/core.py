@@ -1,7 +1,7 @@
 import logging
 from typing import NamedTuple
 
-from pysphero.bluetooth.bluepy_adapter import BluepyAdapter
+from pysphero.bluetooth import BleAdapter
 from pysphero.constants import Toy
 from pysphero.device_api import Animatronics, Sensor, UserIO, ApiProcessor, Power, SystemInfo
 from pysphero.driving import Driving
@@ -39,7 +39,7 @@ class Sphero:
         self._ble_adapter = value
 
     def __enter__(self):
-        self.ble_adapter = BluepyAdapter(self.mac_address)
+        self.ble_adapter = BleAdapter(self.mac_address)
         # if self.type is Toy.unknown:
         #     self.type = TOY_BY_PREFIX.get(self.name[:3], Toy.unknown)
         return self
