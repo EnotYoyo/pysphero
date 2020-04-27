@@ -144,7 +144,7 @@ class Sensor(DeviceApiABC):
 
             return callback(callback_data)
 
-        self.notify(SensorCommand.sensor_streaming_data, callback_wrapper, sleep_time=interval / 1000, timeout=timeout)
+        self.notify(SensorCommand.sensor_streaming_data, callback_wrapper, timeout=timeout)
         self._set_sensor_streaming_mask(mask, interval, count)
 
     def cancel_notify_sensors(self):

@@ -12,7 +12,7 @@ def test_packet_init():
     assert packet.flags == 0x0a
     assert packet.target_id is None
     assert packet.source_id is None
-    assert packet.sequence == 0x00
+    assert packet.sequence == Packet._sequence
     assert packet.data == []
 
 
@@ -23,7 +23,7 @@ def test_packet_source_id():
     assert packet.flags == 0x2a
     assert packet.target_id is None
     assert packet.source_id == 0x01
-    assert packet.sequence == 0x00
+    assert packet.sequence == Packet._sequence
     assert packet.data == []
 
 
@@ -34,7 +34,7 @@ def test_packet_target_id():
     assert packet.flags == 0x1a
     assert packet.target_id == 0x01
     assert packet.source_id is None
-    assert packet.sequence == 0x00
+    assert packet.sequence == Packet._sequence
     assert packet.data == []
 
 
@@ -45,7 +45,7 @@ def test_packet_flags():
     assert packet.flags == 0x01
     assert packet.target_id is None
     assert packet.source_id is None
-    assert packet.sequence == 0x00
+    assert packet.sequence == Packet._sequence
     assert packet.data == []
 
 
@@ -56,7 +56,7 @@ def test_packet_flags_with_source_id():
     assert packet.flags == 0x01
     assert packet.target_id is None
     assert packet.source_id == 0x02
-    assert packet.sequence == 0x00
+    assert packet.sequence == Packet._sequence
     assert packet.data == []
 
 
@@ -67,13 +67,22 @@ def test_packet_flags_with_target_id():
     assert packet.flags == 0x01
     assert packet.target_id == 0x02
     assert packet.source_id is None
-    assert packet.sequence == 0x00
+    assert packet.sequence == Packet._sequence
     assert packet.data == []
 
 
 def test_packet_id():
     packet = Packet(0x23, 0x42)
     assert packet.id == (0x23, 0x42)
+
+
+def test_packet_sequence():
+    Packet._sequence = 0x00
+    packet1 = Packet(0x23, 0x42)
+    packet2 = Packet(0x23, 0x42)
+    assert packet1.sequence == 0x01
+    assert packet2.sequence == 0x02
+    assert Packet._sequence == 0x02
 
 
 def test_packet_str_and_repr():

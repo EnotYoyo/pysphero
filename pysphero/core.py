@@ -1,20 +1,12 @@
-import contextlib
 import logging
-import struct
-import time
-from concurrent.futures import Future
-from concurrent.futures.thread import ThreadPoolExecutor
-from threading import Event
-from typing import List, NamedTuple, Callable
+from typing import NamedTuple
 
-from bluepy.btle import ADDR_TYPE_RANDOM, Characteristic, DefaultDelegate, Descriptor, Peripheral
-
-from pysphero.constants import Api2Error, GenericCharacteristic, SpheroCharacteristic, Toy
+from pysphero.bluetooth import BleAdapter
+from pysphero.constants import Toy
 from pysphero.device_api import Animatronics, Sensor, UserIO, ApiProcessor, Power, SystemInfo
 from pysphero.driving import Driving
-from pysphero.exceptions import PySpheroApiError, PySpheroRuntimeError, PySpheroTimeoutError, PySpheroException
+from pysphero.exceptions import PySpheroException
 from pysphero.helpers import cached_property
-from pysphero.packet import Packet
 
 logger = logging.getLogger(__name__)
 
@@ -26,166 +18,6 @@ class PeripheralPreferredConnectionParameters(NamedTuple):
     connection_supervision_timeout_multiplier: int
 
 
-class SpheroDelegate(DefaultDelegate):
-    """
-    Delegate class for bluepy
-    Getting bytes from peripheral and build packets
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.data = []
-        self.packets = {}
-
-    def build_packet(self):
-        """
-        Create and save packet from raw bytes
-        """
-        logger.debug(f"Starting of packet build")
-
-        packet = Packet.from_response(self.data)
-        self.packets[packet.id] = packet
-        self.data = []
-
-    def handleNotification(self, handle: int, data: List[int]):
-        """
-        handleNotification getting raw data from peripheral and save it.
-        This function may be called several times. Therefore, the state is stored inside the class.
-
-        :param handle:
-        :param data: raw data
-        :return:
-        """
-        for b in data:
-            logger.debug(f"Received {b:#04x}")
-            self.data.append(b)
-
-            # packet always ending with end byte
-            if b == Packet.end:
-                if len(self.data) < 6:
-                    raise PySpheroRuntimeError(f"Very small packet {[hex(x) for x in self.data]}")
-                self.build_packet()
-
-
-class SpheroCore:
-    STOP_NOTIFY = object()
-    """
-    Core class for communication with peripheral device
-    In the future, another bluetooth library can be replaced.
-    """
-
-    def __init__(self, mac_address: str, max_workers: int = 10):
-        logger.debug("Init Sphero Core")
-        self.mac_address = mac_address
-        self.delegate = SpheroDelegate()
-        self.peripheral = Peripheral(self.mac_address, ADDR_TYPE_RANDOM)
-        self.peripheral.setDelegate(self.delegate)
-
-        self.ch_api_v2 = self.get_characteristic(uuid=SpheroCharacteristic.api_v2.value)
-        # Initial api descriptor
-        # Need for getting response from sphero
-        desc = self.get_descriptor(self.ch_api_v2, GenericCharacteristic.client_characteristic_configuration.value)
-        desc.write(b"\x01\x00", withResponse=True)
-
-        self._sequence = 0
-
-        self._executor = ThreadPoolExecutor(max_workers=max_workers)
-        self._running = Event()  # disable receiver thread
-        self._running.set()
-        self._notify_futures = {}  # features of notify
-        self._executor.submit(self._receiver)
-        logger.debug("Sphero Core: successful initialization")
-
-    def close(self):
-        self._running.clear()
-        self._executor.shutdown(wait=False)
-        # ignoring any exception
-        # because it does not matter
-        with contextlib.suppress(Exception):
-            self.peripheral.disconnect()
-
-    def _receiver(self):
-        logger.debug("Start receiver")
-
-        sleep = 0.05
-        while self._running.is_set():
-            self.peripheral.waitForNotifications(sleep)
-
-        logger.debug("Stop receiver")
-
-    def _get_response(self, packet: Packet, sleep_time: float = 0.1, timeout: float = 10):
-        while self._running.is_set():
-            response = self.delegate.packets.pop(packet.id, None)
-            if response:
-                return response
-
-            timeout -= sleep_time or 0.01  # protect of 0 sleep_time
-            if timeout <= 0:
-                raise PySpheroTimeoutError(f"Timeout error for response of {packet}")
-
-            time.sleep(sleep_time)
-
-    @property
-    def sequence(self) -> int:
-        """
-        Autoincrement sequence number of packet
-        """
-        self._sequence = (self._sequence + 1) % 256
-        return self._sequence
-
-    def get_characteristic(self, uuid: int or str) -> Characteristic:
-        return self.peripheral.getCharacteristics(uuid=uuid)[0]
-
-    def get_descriptor(self, characteristic: Characteristic, uuid: int or str) -> Descriptor:
-        return characteristic.getDescriptors(forUUID=uuid)[0]
-
-    def notify(self, packet: Packet, callback: Callable, sleep_time: float = 0.1, timeout: float = 10):
-        packet_id = packet.id
-        if packet_id in self._notify_futures:
-            raise PySpheroRuntimeError("Notify thread already exists")
-
-        def worker():
-            logger.debug(f"[NOTIFY_WORKER {packet}] Start")
-
-            while self._running.is_set():
-                response = self._get_response(packet, sleep_time=sleep_time, timeout=timeout)
-                logger.debug(f"[NOTIFY_WORKER {packet}] Received {response}")
-                if callback(response) is SpheroCore.STOP_NOTIFY:
-                    logger.debug(f"[NOTIFY_WORKER {packet}] Received STOP_NOTIFY")
-                    self._notify_futures.pop(packet_id, None)
-                    break
-
-        future = self._executor.submit(worker)
-        self._notify_futures[packet_id] = future
-        return future
-
-    def cancel_notify(self, packet: Packet):
-        future: Future = self._notify_futures.pop(packet.id, None)
-        if future is None:
-            raise PySpheroRuntimeError("Future not found")
-
-        logger.debug(f"[NOTIFY_WORKER {packet}] Cancel")
-        future.cancel()
-
-    def request(self, packet: Packet, with_api_error: bool = True, timeout: float = 10) -> Packet:
-        """
-        Method allow send request packet and get response packet
-
-        :param packet: request packet
-        :param with_api_error: error code check
-        :param timeout: timeout for waiting response from device
-        :return Packet: response packet
-        """
-        logger.debug(f"Send {packet}")
-        packet.sequence = self.sequence
-        self.ch_api_v2.write(packet.build(), withResponse=True)
-
-        response = self._get_response(packet, timeout=timeout)
-        if with_api_error and response.api_error is not Api2Error.success:
-            raise PySpheroApiError(response.api_error)
-        return response
-
-
 class Sphero:
     """
     High-level API for communicate with sphero toy
@@ -194,65 +26,51 @@ class Sphero:
     def __init__(self, mac_address: str, toy_type: Toy = Toy.unknown):
         self.mac_address = mac_address
         self.type = toy_type
-        self._sphero_core = None
+        self._ble_adapter = None
 
     @property
-    def sphero_core(self):
-        if self._sphero_core is None:
+    def ble_adapter(self):
+        if self._ble_adapter is None:
             raise PySpheroException("Use Sphero as context manager")
-        return self._sphero_core
+        return self._ble_adapter
 
-    @sphero_core.setter
-    def sphero_core(self, value):
-        self._sphero_core = value
+    @ble_adapter.setter
+    def ble_adapter(self, value):
+        self._ble_adapter = value
 
     def __enter__(self):
-        self.sphero_core = SpheroCore(self.mac_address)
+        self.ble_adapter = BleAdapter(self.mac_address)
         # if self.type is Toy.unknown:
         #     self.type = TOY_BY_PREFIX.get(self.name[:3], Toy.unknown)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.sphero_core.close()
-
-    @property
-    def name(self) -> str:
-        raise NotImplementedError("This method is unstable")
-        device_name = self.sphero_core.get_characteristic(uuid=GenericCharacteristic.device_name.value)
-        name: bytes = device_name.read()
-        return name.decode("utf-8")
-
-    @property
-    def peripheral_preferred_connection_parameters(self) -> PeripheralPreferredConnectionParameters:
-        ppcp = self.sphero_core.get_characteristic(
-            uuid=GenericCharacteristic.peripheral_preferred_connection_parameters.value)
-        data: bytes = ppcp.read()
-        return PeripheralPreferredConnectionParameters(*struct.unpack("HHHH", data))
+        self.ble_adapter.close()
 
     @cached_property
     def system_info(self) -> SystemInfo:
-        return SystemInfo(sphero_core=self.sphero_core)
+        return SystemInfo(ble_adapter=self.ble_adapter)
 
     @cached_property
     def power(self) -> Power:
-        return Power(sphero_core=self.sphero_core)
+        return Power(ble_adapter=self.ble_adapter)
 
     @cached_property
     def driving(self) -> Driving:
-        return Driving(sphero_core=self.sphero_core)
+        return Driving(ble_adapter=self.ble_adapter)
 
     @cached_property
     def api_processor(self) -> ApiProcessor:
-        return ApiProcessor(sphero_core=self.sphero_core)
+        return ApiProcessor(ble_adapter=self.ble_adapter)
 
     @cached_property
     def user_io(self) -> UserIO:
-        return UserIO(sphero_core=self.sphero_core)
+        return UserIO(ble_adapter=self.ble_adapter)
 
     @cached_property
     def sensor(self) -> Sensor:
-        return Sensor(sphero_core=self.sphero_core)
+        return Sensor(ble_adapter=self.ble_adapter)
 
     @cached_property
     def animatronics(self) -> Animatronics:
-        return Animatronics(sphero_core=self.sphero_core)
+        return Animatronics(ble_adapter=self.ble_adapter)

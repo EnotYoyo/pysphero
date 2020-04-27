@@ -35,6 +35,8 @@ class Packet:
     Usually the first data byte is the api_v2 response code
     """
 
+    _sequence = 0x00
+
     start = 0x8d
     end = 0xd8
 
@@ -63,8 +65,16 @@ class Packet:
         self.source_id = source_id
         self.device_id = device_id
         self.command_id = command_id
-        self.sequence = sequence or 0x00
+        self.sequence = sequence if sequence is not None else self.generate_sequence()
         self.data = data or []
+
+    @classmethod
+    def generate_sequence(cls):
+        """
+        Autoincrement sequence number of packet
+        """
+        cls._sequence = (cls._sequence + 1) % 256
+        return cls._sequence
 
     @property
     def id(self) -> Tuple:
@@ -72,12 +82,12 @@ class Packet:
 
     def __str__(self) -> str:
         return f"Packet(flg: {self.flags:#04x} did: {self.device_id:#04x} cid: {self.command_id:#04x} " \
-            f"seq: {self.sequence:#04x})"
+               f"seq: {self.sequence:#04x})"
 
     def __repr__(self) -> str:
         return f"Packet(flg: {self.flags:#04x} tid: {self.target_id or 0x0:#04x} sid: {self.source_id or 0x0:#04x} " \
-            f"did: {self.device_id:#04x} cid: {self.command_id:#04x} " \
-            f"seq: {self.sequence:#04x}) data: {[hex(i) for i in self.data]} chs: {self.checksum:#04x})"
+               f"did: {self.device_id:#04x} cid: {self.command_id:#04x} " \
+               f"seq: {self.sequence:#04x}) data: {[hex(i) for i in self.data]} chs: {self.checksum:#04x})"
 
     @cached_property
     def api_error(self) -> Api2Error:

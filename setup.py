@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 __pckg__ = "pysphero"
 __dpckg__ = __pckg__.replace("-", "_")
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 
 
 def long_description():
@@ -30,6 +30,9 @@ setup(
             "pytest==4.2.0",
             "pytest-cov==2.6.1",
         ],
+        "gatt": [
+            "gatt==0.2.7",
+        ]
     },
     keywords=["sphero", "sphero-ble", "bolt"],
     classifiers=[

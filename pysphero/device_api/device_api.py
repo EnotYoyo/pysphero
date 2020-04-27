@@ -20,13 +20,13 @@ class DeviceId(Enum):
 class DeviceApiABC(abc.ABC):
     device_id: Enum = NotImplemented
 
-    def __init__(self, sphero_core):
-        self.sphero_core = sphero_core
+    def __init__(self, ble_adapter):
+        self.ble_adapter = ble_adapter
 
-    def request(self, command_id: Enum, with_api_error: bool = True, timeout: float = 10, **kwargs) -> Packet:
-        return self.sphero_core.request(
+    def request(self, command_id: Enum, timeout: float = 10, raise_api_error: bool = True, **kwargs) -> Packet:
+        return self.ble_adapter.write(
             self.packet(command_id=command_id.value, **kwargs),
-            with_api_error=with_api_error,
+            raise_api_error=raise_api_error,
             timeout=timeout,
         )
 
@@ -34,20 +34,18 @@ class DeviceApiABC(abc.ABC):
             self,
             command_id: Enum,
             callback: Callable,
-            sleep_time: float = 0.1,
             timeout: float = 10,
             **kwargs
     ) -> Future:
-        return self.sphero_core.notify(
+        return self.ble_adapter.start_notify(
             self.packet(command_id=command_id.value, **kwargs),
             callback=callback,
-            sleep_time=sleep_time,
             timeout=timeout,
         )
 
     def cancel_notify(self, command_id):
         packet = self.packet(command_id=command_id.value)
-        self.sphero_core.cancel_notify(packet)
+        self.ble_adapter.stop_notify(packet)
 
     def packet(self, **kwargs):
         packet = Packet(
