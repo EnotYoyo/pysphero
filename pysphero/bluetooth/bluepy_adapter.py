@@ -73,7 +73,7 @@ class BluepyAdapter(AbstractBleAdapter):
         desc = self._get_descriptor(self.ch_api_v2, GenericCharacteristic.client_characteristic_configuration.value)
         desc.write(b"\x01\x00", withResponse=True)
 
-        self._executor = ThreadPoolExecutor(max_workers=10)
+        self._executor = ThreadPoolExecutor(max_workers=2)
         self._running = Event()  # disable receiver thread
         self._running.set()
         self._notify_futures = {}  # features of notify

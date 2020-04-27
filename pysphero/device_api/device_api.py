@@ -34,14 +34,12 @@ class DeviceApiABC(abc.ABC):
             self,
             command_id: Enum,
             callback: Callable,
-            sleep_time: float = 0.1,
             timeout: float = 10,
             **kwargs
     ) -> Future:
         return self.ble_adapter.start_notify(
             self.packet(command_id=command_id.value, **kwargs),
             callback=callback,
-            sleep_time=sleep_time,
             timeout=timeout,
         )
 

@@ -7,7 +7,6 @@ from pysphero.packet import Packet
 class AbstractBleAdapter(abc.ABC):
     def __init__(self, mac_address):
         self.mac_address = mac_address
-        self._sequence = 0x0
 
     def close(self):
         ...
