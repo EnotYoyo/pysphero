@@ -192,11 +192,11 @@ class R2LegAction(Enum):
 class Animatronics(DeviceApiABC):
     device_id = DeviceId.animatronics
 
-    def play_animation(self, animation_id: int):
+    def play_animation(self, animation_id: int, target_id=0x12):
         self.request(
             AnimatronicsCommand.play_animation,
             data=[*animation_id.to_bytes(2, "big")],
-            target_id=0x12,
+            target_id=target_id,
         )
 
     def perform_leg_action(self, leg_action: R2LegAction):
