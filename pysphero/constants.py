@@ -39,6 +39,7 @@ class Toy(Enum):
     r2q5 = "R2Q5"
     bb8 = "BB8"
     bb9e = "BB9E"
+    lmq = "LightningMcQueen"
 
 
 TOY_BY_PREFIX = {
@@ -50,4 +51,5 @@ TOY_BY_PREFIX = {
     "Q5-": Toy.r2q5,
     "BB-": Toy.bb8,
     "GB-": Toy.bb9e,
+    "LM-": Toy.lmq,
 }
