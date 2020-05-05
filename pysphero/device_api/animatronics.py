@@ -1,7 +1,9 @@
 import struct
+import time
 from enum import Enum
-
+from typing import Callable
 from pysphero.helpers import float_from_bytes
+from pysphero.packet import Packet
 
 from .device_api import DeviceApiABC, DeviceId
 
@@ -191,6 +193,8 @@ class R2LegAction(Enum):
 
 class Animatronics(DeviceApiABC):
     device_id = DeviceId.animatronics
+    wait_for_play_animation = False
+    animation: int
 
     def play_animation(self, animation_id: int, target_id=0x12):
         self.request(
@@ -198,6 +202,35 @@ class Animatronics(DeviceApiABC):
             data=[*animation_id.to_bytes(2, "big")],
             target_id=target_id,
         )
+
+    def play_animation_and_wait(self, animation_id: int, target_id = 0x12, timeout: float = 10):
+        self.animation = animation_id
+        self.wait_for_play_animation = True
+
+        def set_wait_for_play_animation(value: bool):
+            self.wait_for_play_animation = value
+        def callback_wrapper(response: Packet):
+            #if animation and wait_for_play_animation are not class member, they
+            #are not up to date when callback is called
+
+            if response.data == [*self.animation.to_bytes(2, "big")]:
+                set_wait_for_play_animation(False)
+            else:
+                self.notify(AnimatronicsCommand.play_animation_complete_notify, callback_wrapper, timeout=timeout)
+            return
+
+        self.notify(AnimatronicsCommand.play_animation_complete_notify, callback_wrapper, timeout=timeout)
+        self.request(
+            AnimatronicsCommand.play_animation,
+            data=[*self.animation.to_bytes(2, "big")],
+            target_id=target_id,
+        )
+        while self.wait_for_play_animation == True:
+            timeout -= 1
+            if timeout <= 0:
+                self.wait_for_play_animation = False
+            time.sleep(1)
+        self.cancel_notify(AnimatronicsCommand.play_animation_complete_notify)
 
     def perform_leg_action(self, leg_action: R2LegAction):
         self.request(
