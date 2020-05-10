@@ -1,7 +1,8 @@
 import struct
 import time
 from enum import Enum
-from typing import Callable
+from typing import Optional, List
+
 from pysphero.helpers import float_from_bytes
 from pysphero.packet import Packet
 
@@ -190,12 +191,11 @@ class R2LegAction(Enum):
     two_legs = 0x02
     waddle = 0x03
 
-class LMQAnimation(Enum):
 
 # ALL LMQUXXX have been found like that, sentences written are the french one
 # will switch my device to english to provide the proper sentence, but if someone could
 # do it will help.
-
+class LMQAnimation(Enum):
     Oh_yeah_Lightning_is_ready_LMQ007 = 0x24
     Bien_joue_LMQU006 = 0x26
     Cool_LMQ012 = 0x28
@@ -209,7 +209,7 @@ class LMQAnimation(Enum):
     Look_left_look_right_Yep_nothing_but_open_road_LMQ062 = 0x4e
     My_buddy_Filmore_makes_the_best_organic_fuel_in_the_world_loads_of_power_and_a_clean_burn_LMQ067 = 0x52
     The_road_is_calling_my_name_Hear_it_Lightning_oh_Lightning_LMQ069 = 0x54
-    I_am_speed_LMQ432 = 0x5e # je suis rapide
+    I_am_speed_LMQ432 = 0x5e  # je suis rapide
     I_ve_been_all_over_the_world_and_I_can_honestly_say_that_Flo_s_V_8_Cafe_serves_the_best_quart_of_oil_anywhere_LMQ074 = 0x58
     Crank_the_acceleration_LMQ083 = 0x59
     Focus_focus_LMQ089 = 0x5f
@@ -244,15 +244,19 @@ class LMQAnimation(Enum):
     Engine_Start_LMQ_Start_3 = 0x131
     Engine_Idle_LMQ_Idle_Loop = 0x132
 
-    #sentence in the app that not captured yet.
-    #Woooo_Woo_What_a_blast_LMQ041 =
-    #When_it_comes_to_medicated_bumper_ointment_Rust-eze_is_the_only_brand_I_trust_LMQ073 =
-    #Dahh_LMQ394 =
+    # sentence in the app that not captured yet.
+    # Woooo_Woo_What_a_blast_LMQ041 =
+    # When_it_comes_to_medicated_bumper_ointment_Rust-eze_is_the_only_brand_I_trust_LMQ073 =
+    # Dahh_LMQ394 =
+
 
 class Animatronics(DeviceApiABC):
     device_id = DeviceId.animatronics
-    wait_for_play_animation = False
-    animation: int
+
+    def __init__(self, ble_adapter):
+        super().__init__(ble_adapter)
+        self._wait_for_play_animation = False
+        self._animation: Optional[List[int]] = None
 
     def play_animation(self, animation_id: int, target_id=0x12):
         self.request(
@@ -261,33 +265,28 @@ class Animatronics(DeviceApiABC):
             target_id=target_id,
         )
 
-    def play_animation_and_wait(self, animation_id: int, target_id = 0x12, timeout: float = 10):
-        self.animation = animation_id
-        self.wait_for_play_animation = True
+    def play_animation_and_wait(self, animation_id: int, target_id=0x12, timeout: float = 10):
+        self._animation = [*animation_id.to_bytes(2, "big")]
+        self._wait_for_play_animation = True
 
-        def set_wait_for_play_animation(value: bool):
-            self.wait_for_play_animation = value
         def callback_wrapper(response: Packet):
-            #if animation and wait_for_play_animation are not class member, they
-            #are not up to date when callback is called
-
-            if response.data == [*self.animation.to_bytes(2, "big")]:
-                set_wait_for_play_animation(False)
-            else:
-                self.notify(AnimatronicsCommand.play_animation_complete_notify, callback_wrapper, timeout=timeout)
-            return
+            if response.data == self._animation:
+                self._wait_for_play_animation = False
 
         self.notify(AnimatronicsCommand.play_animation_complete_notify, callback_wrapper, timeout=timeout)
         self.request(
             AnimatronicsCommand.play_animation,
-            data=[*self.animation.to_bytes(2, "big")],
+            data=self._animation,
             target_id=target_id,
         )
-        while self.wait_for_play_animation == True:
-            timeout -= 1
+
+        sleep_time = 0.1
+        while self._wait_for_play_animation:
+            timeout -= sleep_time
             if timeout <= 0:
-                self.wait_for_play_animation = False
-            time.sleep(1)
+                self._wait_for_play_animation = False
+            time.sleep(sleep_time)
+
         self.cancel_notify(AnimatronicsCommand.play_animation_complete_notify)
 
     def perform_leg_action(self, leg_action: R2LegAction):
