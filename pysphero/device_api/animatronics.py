@@ -1,7 +1,10 @@
 import struct
+import time
 from enum import Enum
+from typing import Optional, List
 
 from pysphero.helpers import float_from_bytes
+from pysphero.packet import Packet
 
 from .device_api import DeviceApiABC, DeviceId
 
@@ -189,15 +192,102 @@ class R2LegAction(Enum):
     waddle = 0x03
 
 
+# ALL LMQUXXX have been found like that, sentences written are the french one
+# will switch my device to english to provide the proper sentence, but if someone could
+# do it will help.
+class LMQAnimation(Enum):
+    Oh_yeah_Lightning_is_ready_LMQ007 = 0x24
+    Bien_joue_LMQU006 = 0x26
+    Cool_LMQ012 = 0x28
+    Thank_you_LMQ016 = 0x2b
+    This_is_amazing_LMQ024 = 0x32
+    Whoa_LMQ177 = 0x33
+    Hey_c_mon_let_s_go_LMQ028 = 0x36
+    Have_I_mentioned_that_I_love_your_garage_LMQ031 = 0x39
+    Look_out_folks_Lightning_McQueen_is_back_LMQ039 = 0x3f
+    I_am_so_ready_for_the_Piston_Cup_LMQ044 = 0x41
+    Look_left_look_right_Yep_nothing_but_open_road_LMQ062 = 0x4e
+    My_buddy_Filmore_makes_the_best_organic_fuel_in_the_world_loads_of_power_and_a_clean_burn_LMQ067 = 0x52
+    The_road_is_calling_my_name_Hear_it_Lightning_oh_Lightning_LMQ069 = 0x54
+    I_am_speed_LMQ432 = 0x5e  # je suis rapide
+    I_ve_been_all_over_the_world_and_I_can_honestly_say_that_Flo_s_V_8_Cafe_serves_the_best_quart_of_oil_anywhere_LMQ074 = 0x58
+    Crank_the_acceleration_LMQ083 = 0x59
+    Focus_focus_LMQ089 = 0x5f
+    The_crowd_loves_us_LMQ100 = 0x64
+    Game_on_LMQ105 = 0x66
+    Next_up_Lightning_McQueen_LMQ108 = 0x67
+    Ka_Chow_LMQ113 = 0x69
+    Yes_woo_LMQ116 = 0x6c
+    Pay_attention_this_is_how_it_s_done_LMQ143 = 0x7b
+    Je_suis_Flash_Mcqueen_LMQU008 = 0x7e
+    Wow_LMQ025 = 0x82
+    Ho_oui_Flash_Mcqueen_est_dans_la_place_LMQU003 = 0x8d
+    Hey_LMQ237 = 0x9f
+    Here_I_go_LMQ238 = 0xa0
+    Woo_hoo_LMQ241 = 0xa2
+    Ah_serieux_on_devrait_essayer_autre_chose_LMQU005 = 0xcd
+    Ahhh_LMQ379 = 0xdc
+    Tu_maitrises_mon_ami_LMQU010 = 0xce
+    Gasp_LMQ403 = 0xf2
+    Je_n_ai_jamais_ete_aussi_bien_prepare_LMQU009 = 0xf5
+    Ah_Quels_souvenirs_LMQU007 = 0xf6
+    J_adore_quand_elles_m_appellent_chouchou_LMQ008 = 0xfe
+    Watch_this_I_call_it_The_Wave_LMQ431 = 0x107
+    Groovin_LMQ457 = 0x111
+    Watch_me_now_LMQ458 = 0x112
+    Entendu_allons_y_je_veux_bien_passer_devant_la_camera_LMQU001 = 0x126
+    Etre_un_champion_repose_sur_le_travail_d_equipe_ce_qui_implique_d_avoir_un_stand_de_ravitaillement_d_execption_LMQU002 = 0x128
+    Je_suis_super_rapide_LMQU004 = 0x12c
+    I_m_a_precision_instrument_of_speed_and_aerodynamics_LMQ433 = 0x12d
+    Ahh_c_mon_LMQ125 = 0x12f
+    Engine_Rev_LMQ_Start_2 = 0x130
+    Engine_Start_LMQ_Start_3 = 0x131
+    Engine_Idle_LMQ_Idle_Loop = 0x132
+
+    # sentence in the app that not captured yet.
+    # Woooo_Woo_What_a_blast_LMQ041 =
+    # When_it_comes_to_medicated_bumper_ointment_Rust-eze_is_the_only_brand_I_trust_LMQ073 =
+    # Dahh_LMQ394 =
+
+
 class Animatronics(DeviceApiABC):
     device_id = DeviceId.animatronics
 
-    def play_animation(self, animation_id: int):
+    def __init__(self, ble_adapter):
+        super().__init__(ble_adapter)
+        self._wait_for_play_animation = False
+        self._animation: Optional[List[int]] = None
+
+    def play_animation(self, animation_id: int, target_id=0x12):
         self.request(
             AnimatronicsCommand.play_animation,
             data=[*animation_id.to_bytes(2, "big")],
-            target_id=0x12,
+            target_id=target_id,
         )
+
+    def play_animation_and_wait(self, animation_id: int, target_id=0x12, timeout: float = 10):
+        self._animation = [*animation_id.to_bytes(2, "big")]
+        self._wait_for_play_animation = True
+
+        def callback_wrapper(response: Packet):
+            if response.data == self._animation:
+                self._wait_for_play_animation = False
+
+        self.notify(AnimatronicsCommand.play_animation_complete_notify, callback_wrapper, timeout=timeout)
+        self.request(
+            AnimatronicsCommand.play_animation,
+            data=self._animation,
+            target_id=target_id,
+        )
+
+        sleep_time = 0.1
+        while self._wait_for_play_animation:
+            timeout -= sleep_time
+            if timeout <= 0:
+                self._wait_for_play_animation = False
+            time.sleep(sleep_time)
+
+        self.cancel_notify(AnimatronicsCommand.play_animation_complete_notify)
 
     def perform_leg_action(self, leg_action: R2LegAction):
         self.request(

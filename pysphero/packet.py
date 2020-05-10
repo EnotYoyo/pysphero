@@ -55,7 +55,10 @@ class Packet:
             sequence: int = None,
             data: List[int] = None,
     ):
-        self.flags = flags or Flag.requests_response.value | Flag.resets_inactivity_timeout.value
+        # For LMQ a notification with flag 0x00 is sent once audio has been played
+        self.flags = flags
+        if flags is None:
+            self.flags = (Flag.requests_response.value | Flag.resets_inactivity_timeout.value)
         if flags is None and source_id is not None:
             self.flags |= Flag.command_has_source_id.value
         if flags is None and target_id is not None:
