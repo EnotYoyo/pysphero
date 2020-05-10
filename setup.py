@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 __pckg__ = "pysphero"
 __dpckg__ = __pckg__.replace("-", "_")
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 
 
 def long_description():
