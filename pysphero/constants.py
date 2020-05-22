@@ -10,6 +10,7 @@ class GenericCharacteristic(Enum):
 
 
 class SpheroCharacteristic(Enum):
+    force_band = "00020005-574f-4f20-5370-6865726f2121"
     api_v2 = "00010002-574f-4f20-5370-6865726f2121"
 
 
