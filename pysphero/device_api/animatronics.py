@@ -287,7 +287,7 @@ class Animatronics(DeviceApiABC):
                 self._wait_for_play_animation = False
             time.sleep(sleep_time)
 
-        self.cancel_notify(AnimatronicsCommand.play_animation_complete_notify)
+        self.cancel_notify()
 
     def perform_leg_action(self, leg_action: R2LegAction):
         self.request(

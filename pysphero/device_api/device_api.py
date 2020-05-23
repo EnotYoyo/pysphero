@@ -43,9 +43,8 @@ class DeviceApiABC(abc.ABC):
             timeout=timeout,
         )
 
-    def cancel_notify(self, command_id):
-        packet = self.packet(command_id=command_id.value)
-        self.ble_adapter.stop_notify(packet)
+    def cancel_notify(self):
+        self.ble_adapter.stop_notify()
 
     def packet(self, **kwargs):
         packet = Packet(
