@@ -35,22 +35,26 @@ class GattAdapter(AbstractBleAdapter):
             self.packet_collector, mac_address=self.mac_address, manager=self.manager)
         self._device.connect()
 
-        self.ch_api_v2 = self._find_api_v2()
+        ch_force_band = self._find_characteristic(SpheroCharacteristic.force_band.value)
+        ch_force_band.write_value(b"usetheforce...band")
+
+        self.ch_api_v2 = self._find_characteristic(SpheroCharacteristic.api_v2.value)
+
         self.ch_api_v2.enable_notifications()
         self._executor.submit(self.manager.run)
 
-    def _find_api_v2(self):
-        ch_api_v2 = None
+    def _find_characteristic(self, characteristic: str):
+        found_characteristic = None
         self._device.services_resolved()
         for service in self._device.services:
-            for characteristic in service.characteristics:
-                if str(characteristic.uuid) == SpheroCharacteristic.api_v2.value:
-                    ch_api_v2 = characteristic
+            for ch in service.characteristics:
+                if str(ch.uuid) == characteristic:
+                    found_characteristic = ch
 
-        if not ch_api_v2:
-            raise PySpheroRuntimeError("Sphero v2 characteristic not found")
+        if not found_characteristic:
+            raise PySpheroRuntimeError(f"Characteristic {characteristic} not found")
 
-        return ch_api_v2
+        return found_characteristic
 
     def close(self):
         self.manager.stop()
