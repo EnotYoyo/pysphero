@@ -1,7 +1,8 @@
 import logging
-from typing import NamedTuple
+from typing import NamedTuple, ClassVar
 
 from pysphero.bluetooth import BleAdapter
+from pysphero.bluetooth.ble_adapter import AbstractBleAdapter
 from pysphero.constants import Toy
 from pysphero.device_api import Animatronics, Sensor, UserIO, ApiProcessor, Power, SystemInfo
 from pysphero.driving import Driving
@@ -23,9 +24,15 @@ class Sphero:
     High-level API for communicate with sphero toy
     """
 
-    def __init__(self, mac_address: str, toy_type: Toy = Toy.unknown):
+    def __init__(
+            self,
+            mac_address: str,
+            toy_type: Toy = Toy.unknown,
+            ble_adapter_cls: ClassVar[AbstractBleAdapter] = BleAdapter
+    ):
         self.mac_address = mac_address
         self.type = toy_type
+        self._ble_adapter_cls = ble_adapter_cls
         self._ble_adapter = None
 
     @property
@@ -39,7 +46,7 @@ class Sphero:
         self._ble_adapter = value
 
     def __enter__(self):
-        self.ble_adapter = BleAdapter(self.mac_address)
+        self._ble_adapter = self._ble_adapter_cls(self.mac_address)
         # if self.type is Toy.unknown:
         #     self.type = TOY_BY_PREFIX.get(self.name[:3], Toy.unknown)
         return self

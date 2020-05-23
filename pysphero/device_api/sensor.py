@@ -148,7 +148,7 @@ class Sensor(DeviceApiABC):
         self._set_sensor_streaming_mask(mask, interval, count)
 
     def cancel_notify_sensors(self):
-        self.cancel_notify(SensorCommand.sensor_streaming_data)
+        self.cancel_notify()
 
     def get_sensor_streaming_mask(self) -> Tuple[int, int, List[SensorParameter]]:
         response = self.request(

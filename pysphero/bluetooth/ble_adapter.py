@@ -46,21 +46,21 @@ class AbstractBleAdapter(abc.ABC):
         )
         return self._notify_future
 
-    def stop_notify(self, packet: Packet):
+    def stop_notify(self):
         if self._notify_future is None:
             raise PySpheroRuntimeError("Future not found")
 
-        logger.debug(f"[NOTIFY_WORKER {packet}] Cancel")
+        logger.debug(f"[NOTIFY_WORKER] Cancel")
         self._notify_future.cancel()
         self._notify_future = None
 
     def notify_worker(self, callback: Callable, packet: Packet, timeout: float):
-        logger.debug(f"[NOTIFY_WORKER {packet}] Start")
+        logger.debug(f"[NOTIFY_WORKER] Start {packet}")
 
         while self._running.is_set():
             response = self.packet_collector.get_response(packet, timeout=timeout)
-            logger.debug(f"[NOTIFY_WORKER {packet}] Received {response}")
+            logger.debug(f"[NOTIFY_WORKER] Received {response}")
             if callback(response) is STOP_NOTIFY:
-                logger.debug(f"[NOTIFY_WORKER {packet}] Received STOP_NOTIFY")
+                logger.debug(f"[NOTIFY_WORKER] Received STOP_NOTIFY")
                 self._notify_future = None
                 break
