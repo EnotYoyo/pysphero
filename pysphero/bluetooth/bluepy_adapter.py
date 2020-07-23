@@ -72,6 +72,11 @@ class BluepyAdapter(AbstractBleAdapter):
             raise PySpheroApiError(response.api_error)
         return response
 
+    def write_no_response(self, packet: Packet):
+        logger.debug(f"Send {packet}")
+        self.ch_api_v2.write(packet.build(), withResponse=False)
+        return
+
     def _receiver(self):
         logger.debug("Start receiver")
 

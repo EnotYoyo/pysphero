@@ -71,6 +71,9 @@ class Packet:
         self.sequence = sequence if sequence is not None else self.generate_sequence()
         self.data = data or []
 
+    def get_flags(self) -> int:
+        return self.flags
+    
     @classmethod
     def generate_sequence(cls):
         """

@@ -72,3 +72,6 @@ class GattAdapter(AbstractBleAdapter):
         """
         self.ch_api_v2.write_value(packet.build())
         return self.packet_collector.get_response(packet, timeout)
+
+    def write_no_response(self, packet: Packet):
+        self.ch_api_v2.write_value(packet.build())

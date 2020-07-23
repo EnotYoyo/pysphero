@@ -37,6 +37,12 @@ class AbstractBleAdapter(abc.ABC):
          :return Packet: response packet
          """
 
+    def write_no_response(self, packet: Packet):
+        """
+         Method allow send request packet without a response
+         :param packet: request packet
+         """
+
     def start_notify(self, packet: Packet, callback: Callable, timeout: float = 10):
         self._notify_future = self._executor.submit(
             self.notify_worker,
