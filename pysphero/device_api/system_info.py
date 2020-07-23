@@ -40,7 +40,7 @@ class SystemInfoCommand(Enum):
     get_audio_crc = 0x23
     get_level_one_diagnostics = 0x26
     level_one_diagnostics_async = 0x27
-    # get_sku = 0x28
+    get_sku_LMQ = 0x28 # value from Core library used by LMQ
     get_secondary_mcu_status = 0x29
     secondary_mcu_status_async = 0x2a
     get_sku = 0x38

@@ -22,9 +22,9 @@ class PowerCommand(Enum):
     enter_soft_sleep = 0x01
     get_usb_state = 0x02
     get_battery_voltage = 0x03
-    # get_battery_state = 0x04  # old? value from Core library
+    get_battery_state_LMQ = 0x04  # value from Core library Used by LMQ
     enable_battery_state_change_notification = 0x05
-    # battery_state_changed = 0x06  # old? value from Core library
+    battery_state_changed_LMQ = 0x06  # value from Core library used by LMQ
     wake = 0x0d
     get_battery_percentage = 0x10
     set_power_options = 0x12

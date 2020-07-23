@@ -191,6 +191,28 @@ class R2LegAction(Enum):
     two_legs = 0x02
     waddle = 0x03
 
+class AnimatronicsLMQCommand(Enum):
+    animate_eyes = 0x01
+    animate_suspension = 0x03
+    animate_mouth = 0x04
+    execute_animation_profile = 0x05
+    upload_animation_bundle = 0x06
+    capacitive_touch_indication = 0x07
+    upload_animation_bundle_result = 0x09
+    enable_idle_animation = 0x0a
+    enable_user_drive = 0x0b
+    do_shoulder_action = 0x0d
+    set_head_position = 0x0f
+    execute_animation_bundle_complete = 0x11
+    animate_steering = 0x12
+    animation_upload_process_complete = 0x13
+    get_head_position = 0x14
+    set_shoulder_cam_position = 0x15
+    get_shoulder_cam_position = 0x16
+    set_shoulder_action = 0x25
+    shoulder_action_complete = 0x26
+    enable_shoulder_action_complete = 0x2a
+    stop_animation = 0x2b
 
 # ALL LMQUXXX have been found like that, sentences written are the french one
 # will switch my device to english to provide the proper sentence, but if someone could
