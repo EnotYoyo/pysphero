@@ -1,7 +1,10 @@
 from enum import Enum
 from typing import NamedTuple
+from pysphero.packet import Flag
+from typing import Callable
 
 from .device_api import DeviceApiABC, DeviceId
+from pysphero.packet import Packet
 
 
 class Color(NamedTuple):
@@ -37,6 +40,12 @@ class FrameRotation(Enum):
     degrees_180 = 0x02
     degrees_270 = 0x03
 
+class CapacitiveTouchLocation(Enum):
+    hood = 0x0
+    left_door = 0x1
+    right_door = 0x2
+    roof = 0x3
+    trunk = 0x4
 
 class UserIOCommand(Enum):
     enable_gesture_event_notification = 0x00
@@ -177,4 +186,23 @@ class UserIO(DeviceApiABC):
             command_id=UserIOCommand.set_led_matrix_frame_rotation,
             data=[rotation.value],
             target_id=0x11,
+        )
+        
+    def enable_cap_touch(self, state: bool, callback: Callable = None):
+        """
+        notification will be received designeting which area is touched
+        """
+        
+        def callback_wrapper(response: Packet):
+            touch_location = CapacitiveTouchLocation(response.data[0]).name
+            return callback(touch_location)
+        
+        if state == True:
+            self.notify(UserIOCommand.cap_touch_indication, callback_wrapper)
+        else:
+            self.cancel_notify()
+
+        self.request(
+            command_id=UserIOCommand.cap_touch_enable,
+            data=[int(state)]
         )
