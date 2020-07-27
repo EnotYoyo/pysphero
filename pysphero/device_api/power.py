@@ -10,6 +10,14 @@ class BatteryVoltageStates(UnknownEnumMixing, Enum):
     low = 0x02
     critical = 0x03
 
+class BatteryLMQStates(UnknownEnumMixing, Enum):
+    charged = 0x01
+    charging = 0x02
+    not_charging = 0x03
+    ok = 0x04
+    low = 0x05
+    critical = 0x06
+
 
 class ChargerStates(UnknownEnumMixing, Enum):
     not_charging = 0x01
@@ -75,6 +83,16 @@ class Power(DeviceApiABC):
 
         self.request(PowerCommand.wake)
 
+    def get_battery_state_LMQ(self) -> BatteryLMQStates:
+        """
+        Get battery state without known voltage constants
+
+        :return BatteryVoltageStates:
+        """
+
+        response = self.request(PowerCommand.get_battery_state_LMQ, timeout=100)
+        return BatteryLMQStates(response.data[0])
+
     def get_battery_state(self) -> BatteryVoltageStates:
         """
         Get battery state without known voltage constants
@@ -94,3 +112,11 @@ class Power(DeviceApiABC):
 
         response = self.request(PowerCommand.battery_state_changed)
         return ChargerStates(response.data[0])
+
+    def get_battery_percentage(self) -> int:
+        """
+        Returns battery percentage
+        """
+
+        response = self.request(PowerCommand.get_battery_percentage, timeout = 1000)
+        return response.data[0]
