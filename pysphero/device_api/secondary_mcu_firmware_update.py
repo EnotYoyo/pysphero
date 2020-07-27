@@ -1,8 +1,4 @@
 from enum import Enum
-from typing import NamedTuple
-
-from .device_api import DeviceApiABC, DeviceId
-
 
 
 class SecondaryMcuFirmwareUpdateCommand(Enum):
@@ -20,9 +16,3 @@ class SecondaryMcuFirmwareUpdateCommand(Enum):
     request_application_id = 0x0b
     set_pending_update_flags = 0x0c
     get_pending_update_flags = 0x0d
-    
-
-    
-    
-    
-

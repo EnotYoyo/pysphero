@@ -1,8 +1,4 @@
 from enum import Enum
-from typing import NamedTuple
-
-from .device_api import DeviceApiABC, DeviceId
-
 
 
 class SystemModeCommand(Enum):
@@ -36,7 +32,3 @@ class SystemModeCommand(Enum):
     robot_bad_app_report = 0x21
     get_pending_action_list = 0x22
     get_audio_info = 0x23
-    
-    
-    
-

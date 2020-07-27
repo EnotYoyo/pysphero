@@ -1,9 +1,10 @@
 import logging
 import time
-from typing import List
+from typing import List, Optional
 
-from pysphero.exceptions import PySpheroTimeoutError, PySpheroRuntimeError
-from pysphero.packet import Packet
+from pysphero.constants import Api2Error
+from pysphero.exceptions import PySpheroTimeoutError, PySpheroRuntimeError, PySpheroApiError
+from pysphero.packet import Packet, Flag
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +36,16 @@ class PacketCollector:
         self._packets[packet.id] = packet
         self._data = []
 
-    def get_response(self, packet: Packet, timeout: float = 10) -> Packet:
+    def get_response(self, packet: Packet, raise_api_error: bool = True, timeout: float = 10) -> Optional[Packet]:
+        if (packet.flags & (Flag.requests_response.value | Flag.requests_only_error_response.value)) != 1:
+            return
+
         while True:
             response = self._packets.pop(packet.id, None)
             if response:
+                if raise_api_error and response.api_error is not Api2Error.success:
+                    raise PySpheroApiError(response.api_error)
+
                 return response
 
             timeout -= self._check_response_delta

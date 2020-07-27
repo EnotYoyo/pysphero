@@ -1,8 +1,4 @@
 from enum import Enum
-from typing import NamedTuple
-
-from .device_api import DeviceApiABC, DeviceId
-
 
 
 class WifiCommand(Enum):
@@ -16,9 +12,3 @@ class WifiCommand(Enum):
     send_data_complete = 0x07
     update_done = 0x08
     update_done_complete = 0x09
-    
-
-    
-    
-    
-

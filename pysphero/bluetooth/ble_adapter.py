@@ -2,7 +2,7 @@ import abc
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
-from typing import Callable
+from typing import Callable, Optional
 
 from pysphero.bluetooth.packet_collector import PacketCollector
 from pysphero.exceptions import PySpheroRuntimeError
@@ -27,7 +27,7 @@ class AbstractBleAdapter(abc.ABC):
         self._running.clear()
         self._executor.shutdown(wait=False)
 
-    def write(self, packet: Packet, *, timeout: float = 10, raise_api_error: bool = True) -> Packet:
+    def write(self, packet: Packet, *, timeout: float = 10, raise_api_error: bool = True) -> Optional[Packet]:
         """
          Method allow send request packet and get response packet
 
@@ -35,12 +35,6 @@ class AbstractBleAdapter(abc.ABC):
          :param timeout: timeout waiting for a response from sphero
          :param raise_api_error: raise exception when receive api error
          :return Packet: response packet
-         """
-
-    def write_no_response(self, packet: Packet):
-        """
-         Method allow send request packet without a response
-         :param packet: request packet
          """
 
     def start_notify(self, packet: Packet, callback: Callable, timeout: float = 10):
@@ -64,7 +58,7 @@ class AbstractBleAdapter(abc.ABC):
         logger.debug(f"[NOTIFY_WORKER] Start {packet}")
 
         while self._running.is_set():
-            response = self.packet_collector.get_response(packet, timeout=timeout)
+            response = self.packet_collector.get_response(packet, raise_api_error=False, timeout=timeout)
             logger.debug(f"[NOTIFY_WORKER] Received {response}")
             if callback(response) is STOP_NOTIFY:
                 logger.debug(f"[NOTIFY_WORKER] Received STOP_NOTIFY")

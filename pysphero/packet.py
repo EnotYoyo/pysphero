@@ -70,9 +70,6 @@ class Packet:
         self.command_id = command_id
         self.sequence = sequence if sequence is not None else self.generate_sequence()
         self.data = data or []
-
-    def get_flags(self) -> int:
-        return self.flags
     
     @classmethod
     def generate_sequence(cls):

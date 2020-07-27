@@ -31,18 +31,12 @@ class DeviceApiABC(abc.ABC):
     def __init__(self, ble_adapter):
         self.ble_adapter = ble_adapter
 
-    def request(self, command_id: Enum, flags: int = None, timeout: float = 10, raise_api_error: bool = True, **kwargs) -> Packet:
-        packet = self.packet(command_id=command_id.value, flags=flags, **kwargs)
-        if (packet.get_flags() & (Flag.requests_response.value | Flag.requests_only_error_response.value)) == 1:
-            return self.ble_adapter.write(
-                packet,
-                raise_api_error=raise_api_error,
-                timeout=timeout,
-            )
-        else:
-            return self.ble_adapter.write_no_response(
-                packet
-            )        
+    def request(self, command_id: Enum, timeout: float = 10, raise_api_error: bool = True, **kwargs) -> Packet:
+        return self.ble_adapter.write(
+            self.packet(command_id=command_id.value, **kwargs),
+            raise_api_error=raise_api_error,
+            timeout=timeout,
+        )
 
     def notify(
             self,
