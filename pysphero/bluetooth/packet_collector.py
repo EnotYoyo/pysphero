@@ -37,7 +37,7 @@ class PacketCollector:
         self._data = []
 
     def get_response(self, packet: Packet, raise_api_error: bool = True, timeout: float = 10) -> Optional[Packet]:
-        if (packet.flags & (Flag.requests_response.value | Flag.requests_only_error_response.value)) != 1:
+        if (packet.flags & (Flag.requests_response.value | Flag.requests_only_error_response.value)) == 0:
             return
 
         while True:
