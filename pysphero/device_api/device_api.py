@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Callable
 
 from pysphero.packet import Packet
+from pysphero.packet import Flag
 
 
 class DeviceId(Enum):
@@ -14,7 +15,14 @@ class DeviceId(Enum):
     driving = 0x16
     animatronics = 0x17
     sensors = 0x18
+    peer_connection = 0x19
     user_io = 0x1a
+    storage_command = 0x1b
+    secondary_mcu_firmware_update_command = 0x1d
+    wifi_command = 0x1e
+    factory_test = 0x1f
+    macro_system = 0x20
+    proto = 0xfe
 
 
 class DeviceApiABC(abc.ABC):

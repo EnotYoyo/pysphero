@@ -70,7 +70,7 @@ class Packet:
         self.command_id = command_id
         self.sequence = sequence if sequence is not None else self.generate_sequence()
         self.data = data or []
-
+    
     @classmethod
     def generate_sequence(cls):
         """

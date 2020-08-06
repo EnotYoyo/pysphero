@@ -1,15 +1,12 @@
 import contextlib
 import logging
-from concurrent.futures import ThreadPoolExecutor, Future
-from threading import Event
-from typing import List, Callable
+from typing import List, Optional
 
 from bluepy.btle import DefaultDelegate, Peripheral, ADDR_TYPE_RANDOM, Characteristic, Descriptor
 
 from pysphero.bluetooth.ble_adapter import AbstractBleAdapter
 from pysphero.bluetooth.packet_collector import PacketCollector
-from pysphero.constants import SpheroCharacteristic, GenericCharacteristic, Api2Error
-from pysphero.exceptions import PySpheroRuntimeError, PySpheroApiError
+from pysphero.constants import SpheroCharacteristic, GenericCharacteristic
 from pysphero.packet import Packet
 
 logger = logging.getLogger(__name__)
@@ -63,14 +60,10 @@ class BluepyAdapter(AbstractBleAdapter):
         with contextlib.suppress(Exception):
             self.peripheral.disconnect()
 
-    def write(self, packet: Packet, *, timeout: float = 10, raise_api_error: bool = True) -> Packet:
+    def write(self, packet: Packet, *, timeout: float = 10, raise_api_error: bool = True) -> Optional[Packet]:
         logger.debug(f"Send {packet}")
         self.ch_api_v2.write(packet.build(), withResponse=True)
-
-        response = self.packet_collector.get_response(packet, timeout=timeout)
-        if raise_api_error and response.api_error is not Api2Error.success:
-            raise PySpheroApiError(response.api_error)
-        return response
+        return self.packet_collector.get_response(packet, raise_api_error, timeout=timeout)
 
     def _receiver(self):
         logger.debug("Start receiver")

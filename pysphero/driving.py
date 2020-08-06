@@ -139,3 +139,25 @@ class Driving(DeviceApiABC):
             data=[left_speed, right_speed, direction.value],
             target_id=0x12,
         )
+
+    def ackermann_drive(
+            self,
+            steering: int = 0x00,
+            direction: int = 0x00
+    ):
+        self.request(
+            DrivingCommand.set_ackermann_steering_parameters,
+            data=[*steering.to_bytes(4, "big"), *direction.to_bytes(4, "big")],
+            flags=Flag.resets_inactivity_timeout.value
+        )
+
+    def ackermann_reset(
+            self,
+            steering: int = 0x00,
+            direction: int = 0x00
+    ):
+        self.request(
+            DrivingCommand.absolute_yaw_steering,
+            data=[*steering.to_bytes(4, "big"), *direction.to_bytes(4, "big")],
+            flags=Flag.resets_inactivity_timeout.value
+        )

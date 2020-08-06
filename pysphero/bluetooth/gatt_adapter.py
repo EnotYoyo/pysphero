@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import gatt
 
@@ -61,7 +62,7 @@ class GattAdapter(AbstractBleAdapter):
         self._device.disconnect()
         super().close()
 
-    def write(self, packet: Packet, *, timeout: float = 10, raise_api_error: bool = True) -> Packet:
+    def write(self, packet: Packet, *, timeout: float = 10, raise_api_error: bool = True) -> Optional[Packet]:
         """
          Method allow send request packet and get response packet
 
@@ -70,5 +71,6 @@ class GattAdapter(AbstractBleAdapter):
          :param raise_api_error: raise exception when receive api error
          :return Packet: response packet
         """
+        logger.debug(f"Send {packet}")
         self.ch_api_v2.write_value(packet.build())
-        return self.packet_collector.get_response(packet, timeout)
+        return self.packet_collector.get_response(packet, raise_api_error, timeout)
