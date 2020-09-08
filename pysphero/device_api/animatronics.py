@@ -222,6 +222,7 @@ class LMQAnimation(Enum):
     Bien_joue_LMQU006 = 0x26
     Cool_LMQ012 = 0x28
     Thank_you_LMQ016 = 0x2b
+    C_est_quoi_cette_odeur = 0x30 #Trig a force awareness async notif
     This_is_amazing_LMQ024 = 0x32
     Whoa_LMQ177 = 0x33
     Hey_c_mon_let_s_go_LMQ028 = 0x36
