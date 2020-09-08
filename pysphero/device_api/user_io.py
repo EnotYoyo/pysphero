@@ -194,7 +194,7 @@ class UserIO(DeviceApiABC):
         """
         
         def callback_wrapper(response: Packet):
-            touch_location = CapacitiveTouchLocation(response.data[0]).name
+            touch_location = CapacitiveTouchLocation(response.data[0])
             return callback(touch_location)
         
         if state == True:
