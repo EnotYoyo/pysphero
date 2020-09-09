@@ -218,3 +218,15 @@ class UserIO(DeviceApiABC):
             command_id=UserIOCommand.set_taillights,
             data=[int(value)]
         )
+
+    def get_audio_volume(self) -> int:
+        response = self.request(
+            command_id=UserIOCommand.get_audio_volume
+        )
+        return response.data[0]
+
+    def set_audio_volume(self, value: int):
+            self.request(
+            command_id=UserIOCommand.set_audio_volume,
+            data=[int(value)]
+        )

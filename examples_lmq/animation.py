@@ -10,6 +10,26 @@ def main():
         sphero.power.wake()
         sleep(20)
 
+        volume = sphero.user_io.get_audio_volume()
+        print(volume)
+        sphero.animatronics.play_animation(50)
+        sleep(5)
+
+        sphero.user_io.set_audio_volume(0)
+        volume = sphero.user_io.get_audio_volume()
+        print(volume)
+        sphero.animatronics.play_animation(50)
+        sleep(5)
+
+        sphero.user_io.set_audio_volume(255)
+        volume = sphero.user_io.get_audio_volume()
+        print(volume)
+        sphero.animatronics.play_animation(50)
+        sleep(5)
+
+        sphero.user_io.set_audio_volume(20)
+        volume = sphero.user_io.get_audio_volume()
+        print(volume)
         sphero.animatronics.play_animation(50)
         sleep(5)
 
