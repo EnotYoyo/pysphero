@@ -12,6 +12,10 @@ def main():
         sleep(20)
 
         sphero.power.enter_soft_sleep()
+        
+        #deep sleep
+        sphero.power.enter_deep_sleep()
+
 
 
 if __name__ == "__main__":
