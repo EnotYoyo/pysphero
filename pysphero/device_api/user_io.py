@@ -206,3 +206,15 @@ class UserIO(DeviceApiABC):
             command_id=UserIOCommand.cap_touch_enable,
             data=[int(state)]
         )
+
+    def set_headlights(self, value: int):
+            self.request(
+            command_id=UserIOCommand.set_headlights,
+            data=[int(value)]
+        )
+
+    def set_taillights(self, value: int):
+            self.request(
+            command_id=UserIOCommand.set_taillights,
+            data=[int(value)]
+        )
