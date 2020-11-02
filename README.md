@@ -15,6 +15,10 @@ For using this library need bluepy and libgtk2.0-dev.
 
 # To use gatt BT stack, install it manually
 # pip install gatt
+
+# To use bled112 dongle, pygatt for BGAPI is supported
+# To use pygatt BT stack, install it manually
+# pip install pygatt
 ```
 
 # Install
